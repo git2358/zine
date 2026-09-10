@@ -246,11 +246,12 @@
                 <label>Page Count
                     <select id="pageCount" onchange="updatePageSlots(); render();">
                         <option value="8">8 Pages (1 Sheet)</option>
+                        <option value="16">16 Pages (1 Sheet Folding)</option>
                     </select>
                 </label>
             </div>
 
-            <!-- Margins & Hassan Style Spine Offset -->
+            <!-- Margins & Spine Offset -->
             <div class="control-group">
                 <h3>3. Spacing & Spine Margins</h3>
                 <label>Paper Background
@@ -274,7 +275,7 @@
             <!-- Sequence and Panoramas -->
             <div class="control-group">
                 <h3>4. Sequence & Panoramic Spreads</h3>
-                <p style="font-size: 0.75rem; color:#9ca3af;">Check "Panoramic Span" to merge adjacent facing pages into an uninterrupted double-page photo spread.</p>
+                <p style="font-size: 0.75rem; color:#9ca3af;">Check "Panoramic Span" for 0 gap between facing pages to form a continuous image spread.</p>
                 <div class="page-list" id="pageSlotContainer"></div>
             </div>
 
@@ -290,7 +291,7 @@
         </div>
     </div>
 
-    <!-- Live WYSIWYG Workspace -->
+    <!-- Live Preview Workspace -->
     <div id="workspace">
         <div id="canvas-container">
             <canvas id="zineCanvas"></canvas>
@@ -304,7 +305,7 @@
         const canvas = document.getElementById('zineCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Target Print Render Dimensions @ 300 DPI (Pixels)
+        // Target Print Dimensions @ 300 DPI (Pixels)
         const paperDimensions = {
             'a4': { w: 3508, h: 2480 },
             'a3': { w: 4960, h: 3508 },
@@ -394,7 +395,7 @@
                 div.innerHTML = `
                     <span style="width: 110px;">${labelText}</span>
                     <select onchange="assignImageToPage(${slot.pageNum}, this.value)">${options}</select>
-                    <label class="inline-label" ${hidePan} title="Connect borderlessly with Page ${slot.pageNum + 1}">
+                    <label class="inline-label" ${hidePan} title="0 margin gap with Page ${slot.pageNum + 1}">
                         <input type="checkbox" ${panChecked} onchange="togglePanorama(${slot.pageNum}, this.checked)"> Panoramic
                     </label>
                 `;
@@ -428,49 +429,48 @@
             const spineGap = enableSpine ? parseInt(document.getElementById('spineGap').value) * 3 : 0;
             const bgColor = document.getElementById('bgColor').value;
             const zineOrientation = document.getElementById('zineOrientation').value;
+            const totalPages = parseInt(document.getElementById('pageCount').value);
 
-            // Fill canvas background
+            // Background
             ctx.fillStyle = bgColor;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Configure Grid Matrix based on Page Orientation
             let cols, rows, layoutGrid;
 
-            if (zineOrientation === 'portrait') {
-                // Portrait Zine: Paper divided into 2 Rows x 4 Columns
-                cols = 4;
-                rows = 2;
-                
-                // Standard 8-page Emon Hassan One-Sheet Fold Sequence
-                // Top Row (Upside down relative to paper sheet orientation):
-                // [ Page 8 (Back) ][ Page 1 (Front) ][ Page 6 ][ Page 5 ]
-                // Bottom Row (Right side up):
-                // [ Page 7        ][ Page 2         ][ Page 3 ][ Page 4 ]
-                layoutGrid = [
-                    { col: 0, row: 0, pageNum: 8, rotate: true },
-                    { col: 1, row: 0, pageNum: 1, rotate: true },
-                    { col: 2, row: 0, pageNum: 6, rotate: true },
-                    { col: 3, row: 0, pageNum: 5, rotate: true },
-                    { col: 0, row: 1, pageNum: 7, rotate: false },
-                    { col: 1, row: 1, pageNum: 2, rotate: false },
-                    { col: 2, row: 1, pageNum: 3, rotate: false },
-                    { col: 3, row: 1, pageNum: 4, rotate: false }
-                ];
+            if (totalPages === 8) {
+                if (zineOrientation === 'portrait') {
+                    cols = 4; rows = 2;
+                    layoutGrid = [
+                        { col: 0, row: 0, pageNum: 8, rotate: true },
+                        { col: 1, row: 0, pageNum: 1, rotate: true },
+                        { col: 2, row: 0, pageNum: 6, rotate: true },
+                        { col: 3, row: 0, pageNum: 5, rotate: true },
+                        { col: 0, row: 1, pageNum: 7, rotate: false },
+                        { col: 1, row: 1, pageNum: 2, rotate: false },
+                        { col: 2, row: 1, pageNum: 3, rotate: false },
+                        { col: 3, row: 1, pageNum: 4, rotate: false }
+                    ];
+                } else {
+                    cols = 2; rows = 4;
+                    layoutGrid = [
+                        { col: 0, row: 0, pageNum: 8, rotate: true },
+                        { col: 1, row: 0, pageNum: 1, rotate: true },
+                        { col: 0, row: 1, pageNum: 6, rotate: true },
+                        { col: 1, row: 1, pageNum: 5, rotate: true },
+                        { col: 0, row: 2, pageNum: 7, rotate: false },
+                        { col: 1, row: 2, pageNum: 2, rotate: false },
+                        { col: 0, row: 3, pageNum: 3, rotate: false },
+                        { col: 1, row: 3, pageNum: 4, rotate: false }
+                    ];
+                }
             } else {
-                // Landscape Zine: Paper divided into 4 Rows x 2 Columns
-                cols = 2;
-                rows = 4;
-
-                // Landscape fold sequence map
+                // 16-Page Layout Arrangement (4x4 Grid)
+                cols = 4; rows = 4;
                 layoutGrid = [
-                    { col: 0, row: 0, pageNum: 8, rotate: true },
-                    { col: 1, row: 0, pageNum: 1, rotate: true },
-                    { col: 0, row: 1, pageNum: 6, rotate: true },
-                    { col: 1, row: 1, pageNum: 5, rotate: true },
-                    { col: 0, row: 2, pageNum: 7, rotate: false },
-                    { col: 1, row: 2, pageNum: 2, rotate: false },
-                    { col: 0, row: 3, pageNum: 3, rotate: false },
-                    { col: 1, row: 3, pageNum: 4, rotate: false }
+                    { col: 0, row: 0, pageNum: 16, rotate: true }, { col: 1, row: 0, pageNum: 1, rotate: true }, { col: 2, row: 0, pageNum: 14, rotate: true }, { col: 3, row: 0, pageNum: 3, rotate: true },
+                    { col: 0, row: 1, pageNum: 15, rotate: true }, { col: 1, row: 1, pageNum: 2, rotate: true }, { col: 2, row: 1, pageNum: 13, rotate: true }, { col: 3, row: 1, pageNum: 4, rotate: true },
+                    { col: 0, row: 2, pageNum: 8, rotate: false }, { col: 1, row: 2, pageNum: 9, rotate: false }, { col: 2, row: 2, pageNum: 6, rotate: false }, { col: 3, row: 2, pageNum: 11, rotate: false },
+                    { col: 0, row: 3, pageNum: 7, rotate: false }, { col: 1, row: 3, pageNum: 10, rotate: false }, { col: 2, row: 3, pageNum: 5, rotate: false }, { col: 3, row: 3, pageNum: 12, rotate: false }
                 ];
             }
 
@@ -490,7 +490,7 @@
                 let w = cellWidth;
                 let h = cellHeight;
 
-                // Apply Hassan Spine Margins (Shifts margins inwards away from spine fold line)
+                // Spine Offset logic
                 if (enableSpine) {
                     if (zineOrientation === 'portrait') {
                         if (cell.col % 2 === 0) {
@@ -509,26 +509,31 @@
                     }
                 }
 
-                // Check for Panoramic Span (Strips gap with adjacent facing page)
-                let applyGapRight = true;
-                let applyGapBottom = true;
+                // Check for zero gap panorama on current page
+                let currentGapRight = spacing;
+                let currentGapBottom = spacing;
 
                 if (slot.isPanoramaNext) {
-                    if (zineOrientation === 'portrait') applyGapRight = false;
-                    else applyGapBottom = false;
+                    if (zineOrientation === 'portrait') {
+                        currentGapRight = 0; // Set gap explicitly to 0px
+                    } else {
+                        currentGapBottom = 0; // Set gap explicitly to 0px
+                    }
                 }
 
-                const padGap = spacing / 2;
-                x += padGap;
-                y += padGap;
-                w -= applyGapRight ? spacing : padGap;
-                h -= applyGapBottom ? spacing : padGap;
+                const padGapX = currentGapRight / 2;
+                const padGapY = currentGapBottom / 2;
+
+                x += padGapX;
+                y += padGapY;
+                w -= currentGapRight;
+                h -= currentGapBottom;
 
                 if (imgObj && imgObj.element) {
                     drawPageImage(ctx, imgObj.element, x, y, w, h, cell.rotate);
                 }
 
-                // Draw non-intrusive page label markers
+                // Page Number Marker
                 ctx.save();
                 ctx.fillStyle = "rgba(120, 120, 120, 0.4)";
                 ctx.font = "bold 22px sans-serif";
@@ -544,7 +549,6 @@
                 ctx.rotate(Math.PI);
             }
 
-            // Perform proportional aspect-fill calculation
             const imgAspect = img.width / img.height;
             const cellAspect = w / h;
             let drawW, drawH;
@@ -571,7 +575,6 @@
             ctx.lineWidth = 2;
             ctx.setLineDash([12, 12]);
 
-            // Draw Column dividers
             const colW = canvas.width / cols;
             for (let i = 1; i < cols; i++) {
                 ctx.beginPath();
@@ -580,7 +583,6 @@
                 ctx.stroke();
             }
 
-            // Draw Row dividers
             const rowH = canvas.height / rows;
             for (let j = 1; j < rows; j++) {
                 ctx.beginPath();
@@ -592,7 +594,7 @@
             ctx.restore();
         }
 
-        // Export Actions
+        // Exports
         function exportImage(mimeType) {
             const link = document.createElement('a');
             const ext = mimeType === 'image/tiff' ? 'tiff' : 'png';
