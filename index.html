@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>One-Sheet Zine Imposer</title>
+<title>One-Sheet Zine Studio</title>
 <style>
 :root {
   --bg: #171717; --panel: #222222; --line: #444444;
@@ -20,8 +20,8 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 button.primary:hover { background: var(--accent-hover); }
 button.danger { background: rgba(229, 72, 77, 0.2); border-color: var(--danger); color: var(--danger); }
 button.danger:hover { background: var(--danger); color: #fff; }
-button.small { padding: 5px 8px; font-size: 0.8rem; }
-.app { display: grid; grid-template-columns: minmax(0, 1fr) 380px; min-height: 100vh; }
+button.small { padding: 4px 8px; font-size: 0.78rem; }
+.app { display: grid; grid-template-columns: minmax(0, 1fr) 400px; min-height: 100vh; }
 .preview-area { min-width: 0; display: flex; flex-direction: column; background: #0c0c0e; }
 .topbar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 5; }
 .topbar h1 { font-size: 1rem; margin: 0; font-weight: 600; white-space: nowrap; }
@@ -30,13 +30,15 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
 #paperPreview { position: relative; background: var(--paper); box-shadow: 0 12px 40px rgba(0,0,0,0.6); overflow: hidden; }
 .page { position: absolute; overflow: hidden; background: var(--page-bg, #fff); box-sizing: border-box; }
 .page.flipped { transform: rotate(180deg); }
+.page-inner { width: 100%; height: 100%; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
 .page img { width: 100%; height: 100%; display: block; }
 .page img.fit-cover { object-fit: cover; }
 .page img.fit-contain { object-fit: contain; }
+.page img.fit-fill { object-fit: fill; }
 .page .empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-size: 11px; text-align: center; padding: 4px; border: 1px dashed #ccc; margin: 2px; }
-.page .border-overlay { position: absolute; inset: 0; pointer-events: none; }
-.page .label { position: absolute; left: 3px; top: 3px; font-size: 9px; font-weight: 700; color: #333; background: rgba(255,255,255,0.85); padding: 1px 3px; border-radius: 3px; z-index: 2; border: 1px solid #ddd; }
-.foldline { position: absolute; z-index: 3; pointer-events: none; }
+.page .border-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+.page .label { position: absolute; left: 3px; top: 3px; font-size: 9px; font-weight: 700; color: #333; background: rgba(255,255,255,0.85); padding: 1px 3px; border-radius: 3px; z-index: 5; border: 1px solid #ddd; }
+.foldline { position: absolute; z-index: 6; pointer-events: none; }
 .foldline.v { top: 0; bottom: 0; border-left: 1px dashed #999; }
 .foldline.h { left: 0; right: 0; border-top: 1px dashed #999; }
 
@@ -52,12 +54,12 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
 .drop.drag { border-color: var(--accent); background: rgba(79, 128, 255, 0.1); }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
-.page-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 380px; overflow-y: auto; padding-right: 4px; }
+.page-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
 .page-card { background: #181818; border: 1px solid var(--line); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
 .page-card .header { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; font-weight: 600; color: var(--muted); }
-.page-card .thumb-box { height: 60px; background: #000; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid #333; }
-.page-card .thumb-box img { width: 100%; height: 100%; object-fit: cover; }
-.page-card select { font-size: 0.75rem; padding: 4px; width: 100%; background: #111; color: #fff; border: 1px solid #444; border-radius: 4px; }
+.page-card .thumb-box { height: 60px; background: #000; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid #333; position: relative; }
+.page-card .thumb-box img { width: 100%; height: 100%; }
+.page-card select { font-size: 0.72rem; padding: 3px 5px; width: 100%; background: #111; color: #fff; border: 1px solid #444; border-radius: 4px; }
 
 .help { font-size: 0.75rem; color: var(--muted); line-height: 1.4; margin-top: 4px; }
 .status { font-size: 0.78rem; color: var(--muted); }
@@ -73,7 +75,7 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
 <div class="app">
   <main class="preview-area">
     <div class="topbar">
-      <h1>Local Zine Imposer (One Sheet)</h1>
+      <h1>One-Sheet Zine Studio</h1>
       <div class="spacer"></div>
       <button id="printBtn" class="primary">Print / Save PDF</button>
     </div>
@@ -102,24 +104,31 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
         <div class="field">
           <label>Layout Mode</label>
           <select id="pageCount">
-            <option value="8">8 Pages (2×4 Grid)</option>
-            <option value="16">16 Pages (4×4 Grid)</option>
+            <option value="16" selected>16 Images (4×4 Grid)</option>
+            <option value="8">8 Images (2×4 Grid)</option>
           </select>
         </div>
         <div class="field">
-          <label>Paper Size</label>
-          <select id="paper"><option value="A4">A4</option><option value="A3">A3</option><option value="US Letter">US Letter</option></select>
+          <label>Sheet Orientation</label>
+          <select id="sheetOrientation">
+            <option value="portrait" selected>Portrait</option>
+            <option value="landscape">Landscape</option>
+          </select>
         </div>
       </div>
       <div class="grid2">
         <div class="field">
-          <label>Image Fit</label>
-          <select id="objectFit"><option value="cover">Cover (Crop)</option><option value="contain">Contain (Fit)</option></select>
+          <label>Paper Size</label>
+          <select id="paper"><option value="A4">A4</option><option value="A3">A3</option><option value="US Letter">US Letter</option></select>
         </div>
         <div class="field">
-          <label>Outer Margin (mm)</label>
-          <input id="margin" type="number" min="0" max="30" step="0.5" value="4">
+          <label>Global Image Fit</label>
+          <select id="objectFit"><option value="cover">Crop / Fill (Cover)</option><option value="contain">Fit Whole (Contain)</option><option value="fill">Stretch to Fill</option></select>
         </div>
+      </div>
+      <div class="field">
+        <label>Outer Margin (mm)</label>
+        <input id="margin" type="number" min="0" max="30" step="0.5" value="4">
       </div>
     </div>
 
@@ -132,7 +141,7 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
         </div>
         <div class="field">
           <label>Border Color</label>
-          <input id="borderColor" type="color" value="#222222">
+          <input id="borderColor" type="color" value="#ffffff">
         </div>
       </div>
       <div class="grid2">
@@ -148,8 +157,8 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
     </div>
 
     <div class="section">
-      <h2>4. Page Assignments</h2>
-      <div class="help" style="margin-bottom:10px">Assign uploaded photos to reader page numbers. Pages on top rows automatically rotate $180^\circ$ for single-sided folding.</div>
+      <h2>4. Individual Page Controls</h2>
+      <div class="help" style="margin-bottom:10px">Customize per-page photo assignment, rotation angle, and image framing fit.</div>
       <div id="pageGrid" class="page-grid"></div>
     </div>
 
@@ -161,7 +170,7 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
         <button id="jsonIn">Load Settings</button>
         <input id="jsonInput" type="file" accept=".json" hidden>
       </div>
-      <div id="status" class="status" style="margin-top:10px">Single-sheet imposition ready.</div>
+      <div id="status" class="status" style="margin-top:10px">Ready.</div>
     </div>
   </aside>
 </div>
@@ -173,26 +182,26 @@ const $ = id => document.getElementById(id);
 
 const state = {
   photos: [],
-  pageCount: 8,
-  assignments: Array(8).fill(null),
+  pageCount: 16,
+  sheetOrientation: 'portrait',
+  assignments: Array(16).fill(null),
+  pageMeta: Array(16).fill(null).map(() => ({ rotate: 0, fit: 'global' })),
   paper: 'A4',
   objectFit: 'cover',
   margin: 4,
   borderWidth: 0.3,
-  borderColor: '#222222',
+  borderColor: '#ffffff',
   pageBg: '#ffffff',
   guides: 'yes'
 };
 
 const paperDimensionsMM = {
-  "A4": [297, 210],
-  "A3": [420, 297],
-  "US Letter": [279.4, 215.9]
+  "A4": [210, 297],
+  "A3": [297, 420],
+  "US Letter": [215.9, 279.4]
 };
 
-/* Single-Sheet Imposition Schemes */
 const oneSheetLayouts = {
-  // 8-Page Mini-Zine Layout (2 rows × 4 cols)
   8: {
     cols: 4, rows: 2,
     slots: [
@@ -206,26 +215,21 @@ const oneSheetLayouts = {
       { logical: 7, rotate: 0,   col: 3, row: 1 }
     ]
   },
-  // 16-Page Micro-Zine Layout (4 rows × 4 cols on a single sheet)
   16: {
     cols: 4, rows: 4,
     slots: [
-      // Row 0 (Top row - rotated 180deg)
       { logical: 9,  rotate: 180, col: 0, row: 0 },
       { logical: 8,  rotate: 180, col: 1, row: 0 },
       { logical: 7,  rotate: 180, col: 2, row: 0 },
       { logical: 10, rotate: 180, col: 3, row: 0 },
-      // Row 1 (Second row - rotated 180deg)
       { logical: 12, rotate: 180, col: 0, row: 1 },
       { logical: 5,  rotate: 180, col: 1, row: 1 },
       { logical: 6,  rotate: 180, col: 2, row: 1 },
       { logical: 11, rotate: 180, col: 3, row: 1 },
-      // Row 2 (Third row - normal orientation)
       { logical: 13, rotate: 0,   col: 0, row: 2 },
       { logical: 4,  rotate: 0,   col: 1, row: 2 },
       { logical: 3,  rotate: 0,   col: 2, row: 2 },
       { logical: 14, rotate: 0,   col: 3, row: 2 },
-      // Row 3 (Bottom row - normal orientation)
       { logical: 16, rotate: 0,   col: 0, row: 3 },
       { logical: 1,  rotate: 0,   col: 1, row: 3 },
       { logical: 2,  rotate: 0,   col: 2, row: 3 },
@@ -272,10 +276,12 @@ function bindEvents() {
   $("pageCount").onchange = e => {
     state.pageCount = parseInt(e.target.value, 10);
     state.assignments = Array(state.pageCount).fill(null);
+    state.pageMeta = Array(state.pageCount).fill(null).map(() => ({ rotate: 0, fit: 'global' }));
     renderPageGrid();
     renderPreview();
   };
 
+  $("sheetOrientation").onchange = e => { state.sheetOrientation = e.target.value; renderPreview(); };
   $("paper").onchange = e => { state.paper = e.target.value; renderPreview(); };
   $("objectFit").onchange = e => { state.objectFit = e.target.value; renderPreview(); };
   $("margin").oninput = e => { state.margin = +e.target.value || 0; renderPreview(); };
@@ -322,6 +328,8 @@ function renderPageGrid() {
 
     const assignedId = state.assignments[i];
     const photo = state.photos.find(p => p.id === assignedId);
+    const meta = state.pageMeta[i] || { rotate: 0, fit: 'global' };
+    const effectiveFit = meta.fit === 'global' ? state.objectFit : meta.fit;
 
     let tag = '';
     if (logicalNum === 1) tag = ' (Cover)';
@@ -332,19 +340,39 @@ function renderPageGrid() {
         <span>Page ${logicalNum}${tag}</span>
       </div>
       <div class="thumb-box">
-        ${photo ? `<img src="${photo.url}">` : `<span style="font-size:10px;color:#666">Empty</span>`}
+        ${photo ? `<img src="${photo.url}" class="fit-${effectiveFit}" style="transform: rotate(${meta.rotate}deg);">` : `<span style="font-size:10px;color:#666">Empty</span>`}
       </div>
       <select class="photo-select">
         <option value="">-- Blank --</option>
         ${state.photos.map(p => `<option value="${p.id}" ${p.id === assignedId ? 'selected' : ''}>${escapeHtml(p.name)}</option>`).join('')}
       </select>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+        <select class="rot-select">
+          <option value="0" ${meta.rotate === 0 ? 'selected' : ''}>Rot: 0°</option>
+          <option value="90" ${meta.rotate === 90 ? 'selected' : ''}>Rot: 90°</option>
+          <option value="180" ${meta.rotate === 180 ? 'selected' : ''}>Rot: 180°</option>
+          <option value="270" ${meta.rotate === 270 ? 'selected' : ''}>Rot: 270°</option>
+        </select>
+        <select class="fit-select">
+          <option value="global" ${meta.fit === 'global' ? 'selected' : ''}>Fit: Auto</option>
+          <option value="cover" ${meta.fit === 'cover' ? 'selected' : ''}>Fit: Crop</option>
+          <option value="contain" ${meta.fit === 'contain' ? 'selected' : ''}>Fit: Fit</option>
+          <option value="fill" ${meta.fit === 'fill' ? 'selected' : ''}>Fit: Stretch</option>
+        </select>
+      </div>
     `;
 
-    const select = card.querySelector(".photo-select");
-    select.onchange = e => {
+    card.querySelector(".photo-select").onchange = e => {
       state.assignments[i] = e.target.value || null;
-      renderPageGrid();
-      renderPreview();
+      renderPageGrid(); renderPreview();
+    };
+    card.querySelector(".rot-select").onchange = e => {
+      state.pageMeta[i].rotate = parseInt(e.target.value, 10);
+      renderPageGrid(); renderPreview();
+    };
+    card.querySelector(".fit-select").onchange = e => {
+      state.pageMeta[i].fit = e.target.value;
+      renderPageGrid(); renderPreview();
     };
 
     container.appendChild(card);
@@ -356,7 +384,10 @@ function renderPreview() {
   const wrap = $("previewWrap");
   container.innerHTML = "";
 
-  const [mmW, mmH] = paperDimensionsMM[state.paper];
+  const dim = paperDimensionsMM[state.paper];
+  const mmW = state.sheetOrientation === 'portrait' ? dim[0] : dim[1];
+  const mmH = state.sheetOrientation === 'portrait' ? dim[1] : dim[0];
+
   const maxW = wrap.clientWidth - 40;
   const maxH = wrap.clientHeight - 40;
 
@@ -384,12 +415,20 @@ function renderPreview() {
 
     const assignedId = state.assignments[slot.logical - 1];
     const photo = state.photos.find(p => p.id === assignedId);
+    const meta = state.pageMeta[slot.logical - 1] || { rotate: 0, fit: 'global' };
+    const effectiveFit = meta.fit === 'global' ? state.objectFit : meta.fit;
 
     if (photo) {
+      const inner = document.createElement("div");
+      inner.className = "page-inner";
+
       const img = document.createElement("img");
       img.src = photo.url;
-      img.className = `fit-${state.objectFit}`;
-      pageDiv.appendChild(img);
+      img.className = `fit-${effectiveFit}`;
+      if (meta.rotate !== 0) img.style.transform = `rotate(${meta.rotate}deg)`;
+
+      inner.appendChild(img);
+      pageDiv.appendChild(inner);
     } else {
       const empty = document.createElement("div");
       empty.className = "empty";
@@ -413,15 +452,12 @@ function renderPreview() {
   });
 
   if (state.guides === 'yes') {
-    // Vertical fold lines
     for (let c = 1; c < layout.cols; c++) {
       const vFold = document.createElement("div");
       vFold.className = "foldline v";
       vFold.style.left = (c * colW) + "px";
       container.appendChild(vFold);
     }
-
-    // Horizontal fold lines
     for (let r = 1; r < layout.rows; r++) {
       const hFold = document.createElement("div");
       hFold.className = "foldline h";
@@ -432,7 +468,10 @@ function renderPreview() {
 }
 
 function exportPNG() {
-  const [mmW, mmH] = paperDimensionsMM[state.paper];
+  const dim = paperDimensionsMM[state.paper];
+  const mmW = state.sheetOrientation === 'portrait' ? dim[0] : dim[1];
+  const mmH = state.sheetOrientation === 'portrait' ? dim[1] : dim[0];
+
   const dpi = 300;
   const mmToPx = dpi / 25.4;
 
@@ -454,6 +493,8 @@ function exportPNG() {
 
     const assignedId = state.assignments[slot.logical - 1];
     const photo = state.photos.find(p => p.id === assignedId);
+    const meta = state.pageMeta[slot.logical - 1] || { rotate: 0, fit: 'global' };
+    const effectiveFit = meta.fit === 'global' ? state.objectFit : meta.fit;
 
     const marginPx = state.margin * mmToPx;
     const drawW = colW - (marginPx * 2);
@@ -464,24 +505,34 @@ function exportPNG() {
     if (slot.rotate) ctx.rotate((slot.rotate * Math.PI) / 180);
 
     if (photo) {
+      ctx.save();
+      if (meta.rotate) ctx.rotate((meta.rotate * Math.PI) / 180);
+
       const img = photo.img;
-      let nw = img.naturalWidth, nh = img.naturalHeight;
+      const rot = (meta.rotate % 180 !== 0);
+      const nw = rot ? img.naturalHeight : img.naturalWidth;
+      const nh = rot ? img.naturalWidth : img.naturalHeight;
+
       let renderW = drawW, renderH = drawH;
 
-      if (state.objectFit === 'cover') {
+      if (effectiveFit === 'cover') {
         const ratio = Math.max(drawW / nw, drawH / nh);
-        renderW = nw * ratio;
-        renderH = nh * ratio;
-      } else {
+        renderW = nw * ratio; renderH = nh * ratio;
+      } else if (effectiveFit === 'contain') {
         const ratio = Math.min(drawW / nw, drawH / nh);
-        renderW = nw * ratio;
-        renderH = nh * ratio;
+        renderW = nw * ratio; renderH = nh * ratio;
       }
 
       ctx.beginPath();
       ctx.rect(-drawW / 2, -drawH / 2, drawW, drawH);
       ctx.clip();
-      ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
+
+      if (rot) {
+        ctx.drawImage(img, -renderH / 2, -renderW / 2, renderH, renderW);
+      } else {
+        ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
+      }
+      ctx.restore();
     }
 
     if (state.borderWidth > 0) {
@@ -496,7 +547,7 @@ function exportPNG() {
   canvas.toBlob(blob => {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `zine-${state.pageCount}pages-onesheet.png`;
+    a.download = `zine-${state.pageCount}pages-${state.sheetOrientation}.png`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }, "image/png");
@@ -504,23 +555,25 @@ function exportPNG() {
 
 function exportJSON() {
   const data = {
-    app: "Local Zine Imposer",
-    version: 4,
+    app: "One-Sheet Zine Studio",
+    version: 5,
     state: {
       pageCount: state.pageCount,
+      sheetOrientation: state.sheetOrientation,
       paper: state.paper,
       objectFit: state.objectFit,
       margin: state.margin,
       borderWidth: state.borderWidth,
       borderColor: state.borderColor,
       pageBg: state.pageBg,
-      assignments: state.assignments
+      assignments: state.assignments,
+      pageMeta: state.pageMeta
     }
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "zine-one-sheet.json";
+  a.download = "zine-settings.json";
   a.click();
 }
 
@@ -532,6 +585,7 @@ async function importJSONFile(file) {
     if (parsed.state) {
       Object.assign(state, parsed.state);
       $("pageCount").value = state.pageCount;
+      $("sheetOrientation").value = state.sheetOrientation || 'portrait';
       $("paper").value = state.paper;
       $("objectFit").value = state.objectFit;
       $("margin").value = state.margin;
@@ -542,7 +596,7 @@ async function importJSONFile(file) {
       renderPreview();
     }
   } catch (err) {
-    alert("Could not import settings.");
+    alert("Could not load configuration.");
   }
 }
 
