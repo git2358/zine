@@ -1,654 +1,553 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Local Photo Zine Generator</title>
-    <style>
-        :root {
-            --bg-color: #121212;
-            --panel-bg: #1e1e1e;
-            --accent-color: #2563eb;
-            --text-color: #f3f4f6;
-            --border-color: #374151;
-        }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Local Zine Imposer Studio</title>
+<style>
+:root {
+  --bg: #121214; --panel: #1e1e22; --panel2: #28282e; --line: #383842;
+  --text: #f0f0f5; --muted: #9a9ab0; --accent: #4f80ff; --accent-hover: #6692ff;
+  --danger: #e5484d; --paper: #ffffff; --ink: #111111;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body { min-height: 100vh; }
+button, input, select { font: inherit; }
+button { border: 1px solid var(--line); background: var(--panel2); color: #fff; border-radius: 8px; padding: 8px 12px; cursor: pointer; transition: all 0.15s ease; }
+button:hover { background: #33333d; border-color: #555566; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.primary:hover { background: var(--accent-hover); }
+button.danger { background: rgba(229, 72, 77, 0.15); border-color: var(--danger); color: var(--danger); }
+button.danger:hover { background: var(--danger); color: #fff; }
+button.small { padding: 5px 8px; font-size: 0.8rem; }
+.app { display: grid; grid-template-columns: minmax(0, 1fr) 380px; min-height: 100vh; }
+.preview-area { min-width: 0; display: flex; flex-direction: column; background: #0b0b0c; }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 5; }
+.topbar h1 { font-size: 1.1rem; margin: 0; font-weight: 600; white-space: nowrap; }
+.topbar .spacer { flex: 1; }
+.view-modes { display: flex; background: var(--bg); padding: 3px; border-radius: 8px; border: 1px solid var(--line); }
+.view-modes button { border: none; background: transparent; border-radius: 6px; padding: 5px 10px; font-size: 0.85rem; }
+.view-modes button.active { background: var(--panel2); color: var(--accent); font-weight: 600; }
+.preview-wrap { padding: 30px; overflow: auto; flex: 1; display: flex; justify-content: center; align-items: center; }
+#paperPreview { position: relative; background: var(--paper); box-shadow: 0 12px 40px rgba(0,0,0,0.6); overflow: hidden; transition: transform 0.2s ease; }
+.page { position: absolute; overflow: hidden; background: var(--page-bg, #fff); box-sizing: border-box; }
+.page.flipped { transform: rotate(180deg); }
+.page img { width: 100%; height: 100%; display: block; }
+.page img.fit-cover { object-fit: cover; }
+.page img.fit-contain { object-fit: contain; }
+.page .empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-size: 11px; text-align: center; padding: 6px; border: 1px dashed #ccc; margin: 4px; }
+.page .border-overlay { position: absolute; inset: 0; pointer-events: none; }
+.page .label { position: absolute; left: 4px; top: 4px; font-size: 9px; font-weight: 700; color: #333; background: rgba(255,255,255,0.85); padding: 1px 4px; border-radius: 3px; z-index: 2; border: 1px solid #ddd; }
+.foldline { position: absolute; z-index: 3; pointer-events: none; }
+.foldline.v { top: 0; bottom: 0; border-left: 1px dashed #999; }
+.foldline.h { left: 0; right: 0; border-top: 1px dashed #999; }
+.cutline { position: absolute; z-index: 4; pointer-events: none; border-top: 2px solid #e5484d; }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+.sidebar { background: var(--panel); border-left: 1px solid var(--line); overflow-y: auto; }
+.section { padding: 16px; border-bottom: 1px solid var(--line); }
+.section h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 0 0 12px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field { margin-bottom: 10px; }
+.field label { display: block; color: var(--muted); font-size: 0.78rem; margin-bottom: 5px; }
+.field input[type=text], .field input[type=number], .field select { width: 100%; background: var(--bg); color: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; }
+.field input[type=color] { width: 100%; height: 34px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 2px; cursor: pointer; }
+.drop { border: 2px dashed var(--line); border-radius: 10px; padding: 20px; text-align: center; color: var(--muted); background: rgba(0,0,0,0.15); transition: all 0.2s; }
+.drop.drag { border-color: var(--accent); background: rgba(79, 128, 255, 0.1); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
+.page-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 380px; overflow-y: auto; padding-right: 4px; }
+.page-card { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; position: relative; }
+.page-card.drag-over { border-color: var(--accent); background: rgba(79, 128, 255, 0.05); }
+.page-card .header { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+.page-card .thumb-box { height: 75px; background: #000; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; border: 1px solid #333; }
+.page-card .thumb-box img { width: 100%; height: 100%; object-fit: cover; }
+.page-card select { font-size: 0.75rem; padding: 4px; }
 
-        /* Sidebar Controls */
-        #sidebar {
-            width: 380px;
-            background-color: var(--panel-bg);
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            z-index: 10;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
-            flex-shrink: 0;
-        }
+.check { display: flex; gap: 8px; align-items: center; font-size: 0.82rem; margin: 8px 0; cursor: pointer; }
+.help { font-size: 0.75rem; color: var(--muted); line-height: 1.4; margin-top: 4px; }
+.status { font-size: 0.78rem; color: var(--muted); }
 
-        .sidebar-header {
-            padding: 16px;
-            background-color: #111827;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 1.1rem;
-            font-weight: bold;
-        }
-
-        .sidebar-content {
-            padding: 16px;
-            overflow-y: auto;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            background: #1f2937;
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-        }
-
-        .control-group h3 {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #9ca3af;
-        }
-
-        label {
-            font-size: 0.85rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        input[type="number"], select, input[type="color"] {
-            background: #374151;
-            border: 1px solid #4b5563;
-            color: #fff;
-            padding: 6px 8px;
-            border-radius: 4px;
-            width: 55%;
-        }
-
-        input[type="range"] {
-            width: 55%;
-        }
-
-        .inline-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            justify-content: flex-start;
-        }
-
-        .inline-label input[type="checkbox"] {
-            width: auto;
-        }
-
-        /* Page Slot Assignment Panel */
-        .page-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 220px;
-            overflow-y: auto;
-            background: #111827;
-            padding: 8px;
-            border-radius: 4px;
-        }
-
-        .page-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: #1f2937;
-            padding: 6px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-        }
-
-        .page-item select {
-            flex-grow: 1;
-            width: auto;
-        }
-
-        /* Buttons */
-        .btn-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        button, .file-btn {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 500;
-            text-align: center;
-            transition: background 0.2s;
-        }
-
-        button:hover, .file-btn:hover {
-            filter: brightness(1.1);
-        }
-
-        .btn-secondary {
-            background-color: #4b5563;
-        }
-
-        input[type="file"].hidden-input {
-            display: none;
-        }
-
-        /* Preview Workspace */
-        #workspace {
-            flex-grow: 1;
-            background-color: #0b0f19;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 24px;
-            overflow: auto;
-        }
-
-        #canvas-container {
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.9);
-            background: #fff;
-            max-width: 100%;
-            max-height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        canvas {
-            display: block;
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-
-        @media (max-width: 768px) {
-            body {
-                flex-direction: column-reverse;
-                overflow: auto;
-            }
-            #sidebar {
-                width: 100%;
-                height: 50vh;
-            }
-            #workspace {
-                height: 50vh;
-            }
-        }
-    </style>
+@media(max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { border-left: 0; border-top: 1px solid var(--line); }
+  .preview-wrap { min-height: 450px; padding: 16px; }
+}
+</style>
 </head>
 <body>
+<div class="app">
+  <main class="preview-area">
+    <div class="topbar">
+      <h1>Zine Studio</h1>
+      <div class="view-modes">
+        <button id="viewSheet" class="active">Sheet View</button>
+        <button id="viewReader">Reader Spreads</button>
+      </div>
+      <div class="spacer"></div>
+      <button id="printBtn" class="primary">Print / PDF</button>
+    </div>
+    <div class="preview-wrap">
+      <div id="paperPreview"></div>
+    </div>
+  </main>
 
-    <div id="sidebar">
-        <div class="sidebar-header">Photo Zine Layout Studio</div>
-        <div class="sidebar-content">
-
-            <!-- Load Files & Projects -->
-            <div class="control-group">
-                <h3>1. Photos & Project</h3>
-                <label class="file-btn">
-                    📷 Upload Photos
-                    <input type="file" id="imageInput" multiple accept="image/*" class="hidden-input">
-                </label>
-                <div class="btn-grid">
-                    <label class="file-btn btn-secondary">
-                        📥 Load JSON
-                        <input type="file" id="jsonInput" accept=".json" class="hidden-input">
-                    </label>
-                    <button class="btn-secondary" onclick="exportJSON()">📤 Save JSON</button>
-                </div>
-            </div>
-
-            <!-- Paper & Zine Formatting -->
-            <div class="control-group">
-                <h3>2. Paper & Orientation</h3>
-                <label>Paper Size
-                    <select id="paperSize" onchange="render()">
-                        <option value="a4">A4 (297 × 210 mm)</option>
-                        <option value="a3">A3 (420 × 297 mm)</option>
-                        <option value="letter">US Letter (11 × 8.5 in)</option>
-                        <option value="tabloid">US Tabloid (17 × 11 in)</option>
-                    </select>
-                </label>
-                <label>Zine Fold Orientation
-                    <select id="zineOrientation" onchange="render()">
-                        <option value="portrait">Portrait Pages</option>
-                        <option value="landscape">Landscape Pages</option>
-                    </select>
-                </label>
-                <label>Page Count
-                    <select id="pageCount" onchange="updatePageSlots(); render();">
-                        <option value="8">8 Pages (1 Sheet)</option>
-                        <option value="16">16 Pages (1 Sheet Folding)</option>
-                    </select>
-                </label>
-            </div>
-
-            <!-- Margins & Spine Offset -->
-            <div class="control-group">
-                <h3>3. Spacing & Spine Margins</h3>
-                <label>Paper Background
-                    <input type="color" id="bgColor" value="#ffffff" onchange="render()">
-                </label>
-                <label>Outer Margin: <span id="paddingVal">15</span>px
-                    <input type="range" id="padding" min="0" max="60" value="15" oninput="document.getElementById('paddingVal').innerText=this.value; render()">
-                </label>
-                <label>Page Gap: <span id="spacingVal">10</span>px
-                    <input type="range" id="spacing" min="0" max="40" value="10" oninput="document.getElementById('spacingVal').innerText=this.value; render()">
-                </label>
-                <label class="inline-label">
-                    <input type="checkbox" id="enableSpine" checked onchange="render()">
-                    <span>Enable Spine Fold Margins</span>
-                </label>
-                <label>Spine Width: <span id="spineVal">20</span>px
-                    <input type="range" id="spineGap" min="0" max="80" value="20" oninput="document.getElementById('spineVal').innerText=this.value; render()">
-                </label>
-            </div>
-
-            <!-- Sequence and Panoramas -->
-            <div class="control-group">
-                <h3>4. Sequence & Panoramic Spreads</h3>
-                <p style="font-size: 0.75rem; color:#9ca3af;">Check "Panoramic Span" for 0 gap between facing pages to form a continuous image spread.</p>
-                <div class="page-list" id="pageSlotContainer"></div>
-            </div>
-
-            <!-- Render/Exports -->
-            <div class="control-group">
-                <h3>5. Export Print Layout</h3>
-                <div class="btn-grid">
-                    <button onclick="exportImage('image/png')">Save PNG</button>
-                    <button onclick="exportImage('image/tiff')">Save TIFF</button>
-                </div>
-            </div>
-
-        </div>
+  <aside class="sidebar">
+    <div class="section">
+      <h2>1. Media Assets</h2>
+      <div id="drop" class="drop">
+        Drag & Drop Images<br><small>or</small><br>
+        <button id="pickBtn" class="primary small" style="margin-top:6px">Select Files</button>
+      </div>
+      <input id="fileInput" type="file" accept="image/*" multiple hidden>
+      <div class="actions" style="margin-top:10px">
+        <button id="clearPhotos" class="small danger">Clear All</button>
+        <button id="autoAssign" class="small">Auto-Assign</button>
+      </div>
     </div>
 
-    <!-- Live Preview Workspace -->
-    <div id="workspace">
-        <div id="canvas-container">
-            <canvas id="zineCanvas"></canvas>
+    <div class="section">
+      <h2>2. Paper & Layout</h2>
+      <div class="grid2">
+        <div class="field">
+          <label>Paper Size</label>
+          <select id="paper"><option value="A4">A4</option><option value="A3">A3</option><option value="US Letter">US Letter</option></select>
         </div>
+        <div class="field">
+          <label>Fit Mode</label>
+          <select id="objectFit"><option value="cover">Cover (Crop)</option><option value="contain">Contain (Fit)</option></select>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>Outer Margin (mm)</label>
+          <input id="margin" type="number" min="0" max="30" step="0.5" value="5">
+        </div>
+        <div class="field">
+          <label>Page Gap (mm)</label>
+          <input id="gap" type="number" min="0" max="10" step="0.5" value="0">
+        </div>
+      </div>
     </div>
 
-    <script>
-        let uploadedImages = []; 
-        let pageSlots = [];      
+    <div class="section">
+      <h2>3. Styling & Guides</h2>
+      <div class="grid2">
+        <div class="field">
+          <label>Border Width (mm)</label>
+          <input id="borderWidth" type="number" min="0" max="5" step="0.1" value="0.3">
+        </div>
+        <div class="field">
+          <label>Border Color</label>
+          <input id="borderColor" type="color" value="#222222">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>Page Background</label>
+          <input id="pageBg" type="color" value="#ffffff">
+        </div>
+        <div class="field">
+          <label>Guides</label>
+          <select id="guides"><option value="yes">Show Cuts & Folds</option><option value="no">Hide Guides</option></select>
+        </div>
+      </div>
+    </div>
 
-        const canvas = document.getElementById('zineCanvas');
-        const ctx = canvas.getContext('2d');
+    <div class="section">
+      <h2>4. Page Imposition</h2>
+      <div class="help" style="margin-bottom:10px">Assign uploaded photos to logical reader pages. Top row auto-rotates for single-sheet folding.</div>
+      <div id="pageGrid" class="page-grid"></div>
+    </div>
 
-        // Target Print Dimensions @ 300 DPI (Pixels)
-        const paperDimensions = {
-            'a4': { w: 3508, h: 2480 },
-            'a3': { w: 4960, h: 3508 },
-            'letter': { w: 3300, h: 2550 },
-            'tabloid': { w: 5100, h: 3300 }
-        };
+    <div class="section">
+      <h2>5. Export Project</h2>
+      <div class="actions">
+        <button id="pngBtn" class="primary">Export High-Res PNG</button>
+        <button id="jsonOut">Save Project</button>
+        <button id="jsonIn">Load Project</button>
+        <input id="jsonInput" type="file" accept=".json" hidden>
+      </div>
+      <div id="status" class="status" style="margin-top:10px">Client-side rendering engine active.</div>
+    </div>
+  </aside>
+</div>
 
-        window.onload = () => {
-            updatePageSlots();
-            render();
-        };
+<script>
+"use strict";
 
-        document.getElementById('imageInput').addEventListener('change', (e) => {
-            const files = Array.from(e.target.files);
-            let loadedCount = 0;
+const $ = id => document.getElementById(id);
 
-            files.forEach((file) => {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const imgObj = {
-                            id: 'img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-                            name: file.name,
-                            src: event.target.result,
-                            element: img
-                        };
-                        uploadedImages.push(imgObj);
-                        loadedCount++;
-                        if (loadedCount === files.length) {
-                            autoAssignImages();
-                            updatePageSlots();
-                            render();
-                        }
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            });
-        });
+const state = {
+  photos: [], 
+  assignments: Array(8).fill(null), // Logical pages 1..8
+  viewMode: 'sheet', // 'sheet' | 'reader'
+  paper: 'A4',
+  objectFit: 'cover',
+  margin: 5,
+  gap: 0,
+  borderWidth: 0.3,
+  borderColor: '#222222',
+  pageBg: '#ffffff',
+  guides: 'yes'
+};
 
-        function updatePageSlots() {
-            const count = parseInt(document.getElementById('pageCount').value);
-            const newSlots = [];
+const paperDimensionsMM = {
+  "A4": [297, 210], // Landscape dimensions
+  "A3": [420, 297],
+  "US Letter": [279.4, 215.9]
+};
 
-            for (let i = 1; i <= count; i++) {
-                const existing = pageSlots.find(s => s.pageNum === i);
-                newSlots.push(existing || {
-                    pageNum: i,
-                    imageId: uploadedImages[i - 1] ? uploadedImages[i - 1].id : 'none',
-                    isPanoramaNext: false
-                });
-            }
-            pageSlots = newSlots;
-            renderPageSlotsUI();
-        }
+// 8-page mini-zine imposition mapping
+// Standard 8-page mini zine: 2 rows x 4 columns on a single landscape sheet
+// Row 1 (Top, upside down): [ Logical 5, Logical 4, Logical 3, Logical 6 ]
+// Row 2 (Bottom, right side up): [ Logical 8 (Back), Logical 1 (Front), Logical 2, Logical 7 ]
+const zineSheetLayout = [
+  { logical: 5, rotate: 180, col: 0, row: 0 },
+  { logical: 4, rotate: 180, col: 1, row: 0 },
+  { logical: 3, rotate: 180, col: 2, row: 0 },
+  { logical: 6, rotate: 180, col: 3, row: 0 },
+  { logical: 8, rotate: 0,   col: 0, row: 1 },
+  { logical: 1, rotate: 0,   col: 1, row: 1 },
+  { logical: 2, rotate: 0,   col: 2, row: 1 },
+  { logical: 7, rotate: 0,   col: 3, row: 1 }
+];
 
-        function autoAssignImages() {
-            pageSlots.forEach((slot, idx) => {
-                if (uploadedImages[idx]) {
-                    slot.imageId = uploadedImages[idx].id;
-                }
-            });
-        }
+function init() {
+  bindEvents();
+  renderPageGrid();
+  renderPreview();
+}
 
-        function renderPageSlotsUI() {
-            const container = document.getElementById('pageSlotContainer');
-            container.innerHTML = '';
+function bindEvents() {
+  $("pickBtn").onclick = () => $("fileInput").click();
+  $("fileInput").onchange = e => handleFiles([...e.target.files]);
+  
+  const drop = $("drop");
+  drop.ondragover = e => { e.preventDefault(); drop.classList.add("drag"); };
+  drop.ondragleave = () => drop.classList.remove("drag");
+  drop.ondrop = e => {
+    e.preventDefault();
+    drop.classList.remove("drag");
+    handleFiles([...e.dataTransfer.files].filter(f => f.type.startsWith("image/")));
+  };
 
-            pageSlots.forEach((slot, index) => {
-                const div = document.createElement('div');
-                div.className = 'page-item';
+  $("clearPhotos").onclick = () => {
+    state.photos.forEach(p => URL.revokeObjectURL(p.url));
+    state.photos = [];
+    state.assignments.fill(null);
+    renderPageGrid();
+    renderPreview();
+  };
 
-                let labelText = `Pg ${slot.pageNum}`;
-                if (slot.pageNum === 1) labelText += " (Front Cover)";
-                if (slot.pageNum === pageSlots.length) labelText += " (Back Cover)";
+  $("autoAssign").onclick = () => {
+    state.photos.forEach((ph, i) => {
+      if (i < 8) state.assignments[i] = ph.id;
+    });
+    renderPageGrid();
+    renderPreview();
+  };
 
-                let options = `<option value="none">-- Blank --</option>`;
-                uploadedImages.forEach(img => {
-                    const sel = img.id === slot.imageId ? 'selected' : '';
-                    options += `<option value="${img.id}" ${sel}>${img.name}</option>`;
-                });
+  $("paper").onchange = e => { state.paper = e.target.value; renderPreview(); };
+  $("objectFit").onchange = e => { state.objectFit = e.target.value; renderPreview(); };
+  $("margin").oninput = e => { state.margin = +e.target.value || 0; renderPreview(); };
+  $("gap").oninput = e => { state.gap = +e.target.value || 0; renderPreview(); };
+  $("borderWidth").oninput = e => { state.borderWidth = +e.target.value || 0; renderPreview(); };
+  $("borderColor").oninput = e => { state.borderColor = e.target.value; renderPreview(); };
+  $("pageBg").oninput = e => { state.pageBg = e.target.value; renderPreview(); };
+  $("guides").onchange = e => { state.guides = e.target.value; renderPreview(); };
 
-                const panChecked = slot.isPanoramaNext ? 'checked' : '';
-                const hidePan = (index === pageSlots.length - 1) ? 'style="display:none;"' : '';
+  $("viewSheet").onclick = () => setViewMode('sheet');
+  $("viewReader").onclick = () => setViewMode('reader');
 
-                div.innerHTML = `
-                    <span style="width: 110px;">${labelText}</span>
-                    <select onchange="assignImageToPage(${slot.pageNum}, this.value)">${options}</select>
-                    <label class="inline-label" ${hidePan} title="0 margin gap with Page ${slot.pageNum + 1}">
-                        <input type="checkbox" ${panChecked} onchange="togglePanorama(${slot.pageNum}, this.checked)"> Panoramic
-                    </label>
-                `;
-                container.appendChild(div);
-            });
-        }
+  $("printBtn").onclick = () => window.print();
+  $("pngBtn").onclick = exportHighResPNG;
+  $("jsonOut").onclick = exportJSON;
+  $("jsonIn").onclick = () => $("jsonInput").click();
+  $("jsonInput").onchange = e => importJSONFile(e.target.files[0]);
 
-        function assignImageToPage(pageNum, imgId) {
-            const slot = pageSlots.find(s => s.pageNum === pageNum);
-            if (slot) slot.imageId = imgId;
-            render();
-        }
+  window.addEventListener("resize", renderPreview);
+}
 
-        function togglePanorama(pageNum, checked) {
-            const slot = pageSlots.find(s => s.pageNum === pageNum);
-            if (slot) slot.isPanoramaNext = checked;
-            render();
-        }
+function setViewMode(mode) {
+  state.viewMode = mode;
+  $("viewSheet").classList.toggle("active", mode === 'sheet');
+  $("viewReader").classList.toggle("active", mode === 'reader');
+  renderPreview();
+}
 
-        // Core Layout & Rendering Engine
-        function render() {
-            const paperType = document.getElementById('paperSize').value;
-            const dim = paperDimensions[paperType];
-            
-            canvas.width = dim.w;
-            canvas.height = dim.h;
+async function handleFiles(files) {
+  for (const f of files) {
+    if (!f.type.startsWith("image/")) continue;
+    const url = URL.createObjectURL(f);
+    const img = new Image();
+    img.src = url;
+    await new Promise(r => { img.onload = r; });
+    
+    const photoObj = { id: crypto.randomUUID(), name: f.name, url, img };
+    state.photos.push(photoObj);
 
-            const padding = parseInt(document.getElementById('padding').value) * 3;
-            const spacing = parseInt(document.getElementById('spacing').value) * 2;
-            const enableSpine = document.getElementById('enableSpine').checked;
-            const spineGap = enableSpine ? parseInt(document.getElementById('spineGap').value) * 3 : 0;
-            const bgColor = document.getElementById('bgColor').value;
-            const zineOrientation = document.getElementById('zineOrientation').value;
-            const totalPages = parseInt(document.getElementById('pageCount').value);
+    // Auto-fill first empty assignment slot
+    const emptyIdx = state.assignments.findIndex(x => x === null);
+    if (emptyIdx !== -1) state.assignments[emptyIdx] = photoObj.id;
+  }
+  renderPageGrid();
+  renderPreview();
+}
 
-            // Background
-            ctx.fillStyle = bgColor;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+function renderPageGrid() {
+  const container = $("pageGrid");
+  container.innerHTML = "";
 
-            let cols, rows, layoutGrid;
+  for (let i = 0; i < 8; i++) {
+    const logicalNum = i + 1;
+    const card = document.createElement("div");
+    card.className = "page-card";
 
-            if (totalPages === 8) {
-                if (zineOrientation === 'portrait') {
-                    cols = 4; rows = 2;
-                    layoutGrid = [
-                        { col: 0, row: 0, pageNum: 8, rotate: true },
-                        { col: 1, row: 0, pageNum: 1, rotate: true },
-                        { col: 2, row: 0, pageNum: 6, rotate: true },
-                        { col: 3, row: 0, pageNum: 5, rotate: true },
-                        { col: 0, row: 1, pageNum: 7, rotate: false },
-                        { col: 1, row: 1, pageNum: 2, rotate: false },
-                        { col: 2, row: 1, pageNum: 3, rotate: false },
-                        { col: 3, row: 1, pageNum: 4, rotate: false }
-                    ];
-                } else {
-                    cols = 2; rows = 4;
-                    layoutGrid = [
-                        { col: 0, row: 0, pageNum: 8, rotate: true },
-                        { col: 1, row: 0, pageNum: 1, rotate: true },
-                        { col: 0, row: 1, pageNum: 6, rotate: true },
-                        { col: 1, row: 1, pageNum: 5, rotate: true },
-                        { col: 0, row: 2, pageNum: 7, rotate: false },
-                        { col: 1, row: 2, pageNum: 2, rotate: false },
-                        { col: 0, row: 3, pageNum: 3, rotate: false },
-                        { col: 1, row: 3, pageNum: 4, rotate: false }
-                    ];
-                }
-            } else {
-                // 16-Page Layout Arrangement (4x4 Grid)
-                cols = 4; rows = 4;
-                layoutGrid = [
-                    { col: 0, row: 0, pageNum: 16, rotate: true }, { col: 1, row: 0, pageNum: 1, rotate: true }, { col: 2, row: 0, pageNum: 14, rotate: true }, { col: 3, row: 0, pageNum: 3, rotate: true },
-                    { col: 0, row: 1, pageNum: 15, rotate: true }, { col: 1, row: 1, pageNum: 2, rotate: true }, { col: 2, row: 1, pageNum: 13, rotate: true }, { col: 3, row: 1, pageNum: 4, rotate: true },
-                    { col: 0, row: 2, pageNum: 8, rotate: false }, { col: 1, row: 2, pageNum: 9, rotate: false }, { col: 2, row: 2, pageNum: 6, rotate: false }, { col: 3, row: 2, pageNum: 11, rotate: false },
-                    { col: 0, row: 3, pageNum: 7, rotate: false }, { col: 1, row: 3, pageNum: 10, rotate: false }, { col: 2, row: 3, pageNum: 5, rotate: false }, { col: 3, row: 3, pageNum: 12, rotate: false }
-                ];
-            }
+    const assignedId = state.assignments[i];
+    const photo = state.photos.find(p => p.id === assignedId);
 
-            drawFoldGuides(cols, rows);
+    card.innerHTML = `
+      <div class="header">
+        <span>Page ${logicalNum} ${logicalNum === 1 ? '(Cover)' : logicalNum === 8 ? '(Back)' : ''}</span>
+      </div>
+      <div class="thumb-box">
+        ${photo ? `<img src="${photo.url}">` : `<span style="font-size:10px;color:#666">Empty</span>`}
+      </div>
+      <select class="photo-select">
+        <option value="">-- Blank Page --</option>
+        ${state.photos.map(p => `<option value="${p.id}" ${p.id === assignedId ? 'selected' : ''}>${escapeHtml(p.name)}</option>`).join('')}
+      </select>
+    `;
 
-            const cellWidth = (canvas.width - (padding * 2)) / cols;
-            const cellHeight = (canvas.height - (padding * 2)) / rows;
+    const select = card.querySelector(".photo-select");
+    select.onchange = e => {
+      state.assignments[i] = e.target.value || null;
+      renderPageGrid();
+      renderPreview();
+    };
 
-            layoutGrid.forEach(cell => {
-                const slot = pageSlots.find(s => s.pageNum === cell.pageNum);
-                if (!slot) return;
+    container.appendChild(card);
+  }
+}
 
-                const imgObj = uploadedImages.find(i => i.id === slot.imageId);
+function renderPreview() {
+  const preview = $("paperPreview");
+  preview.innerHTML = "";
 
-                let x = padding + cell.col * cellWidth;
-                let y = padding + cell.row * cellHeight;
-                let w = cellWidth;
-                let h = cellHeight;
+  if (state.viewMode === 'sheet') {
+    renderSheetPreview(preview);
+  } else {
+    renderReaderPreview(preview);
+  }
+}
 
-                // Spine Offset logic
-                if (enableSpine) {
-                    if (zineOrientation === 'portrait') {
-                        if (cell.col % 2 === 0) {
-                            x += spineGap;
-                            w -= spineGap;
-                        } else {
-                            w -= spineGap;
-                        }
-                    } else {
-                        if (cell.row % 2 === 0) {
-                            y += spineGap;
-                            h -= spineGap;
-                        } else {
-                            h -= spineGap;
-                        }
-                    }
-                }
+function renderSheetPreview(container) {
+  const [mmW, mmH] = paperDimensionsMM[state.paper];
+  const scale = Math.min(($("preview-wrap").clientWidth - 60) / mmW, ($("preview-wrap").clientHeight - 60) / mmH, 2.5);
+  
+  const width = mmW * scale;
+  const height = mmH * scale;
 
-                // Check for zero gap panorama on current page
-                let currentGapRight = spacing;
-                let currentGapBottom = spacing;
+  container.style.width = width + "px";
+  container.style.height = height + "px";
+  container.style.setProperty('--page-bg', state.pageBg);
 
-                if (slot.isPanoramaNext) {
-                    if (zineOrientation === 'portrait') {
-                        currentGapRight = 0; // Set gap explicitly to 0px
-                    } else {
-                        currentGapBottom = 0; // Set gap explicitly to 0px
-                    }
-                }
+  const colW = width / 4;
+  const rowH = height / 2;
 
-                const padGapX = currentGapRight / 2;
-                const padGapY = currentGapBottom / 2;
+  zineSheetLayout.forEach(slot => {
+    const pageDiv = document.createElement("div");
+    pageDiv.className = `page ${slot.rotate === 180 ? 'flipped' : ''}`;
+    
+    const marginPx = (state.margin / mmW) * width;
+    const gapPx = (state.gap / mmW) * width;
 
-                x += padGapX;
-                y += padGapY;
-                w -= currentGapRight;
-                h -= currentGapBottom;
+    pageDiv.style.left = (slot.col * colW + gapPx / 2) + "px";
+    pageDiv.style.top = (slot.row * rowH + gapPx / 2) + "px";
+    pageDiv.style.width = (colW - gapPx) + "px";
+    pageDiv.style.height = (rowH - gapPx) + "px";
 
-                if (imgObj && imgObj.element) {
-                    drawPageImage(ctx, imgObj.element, x, y, w, h, cell.rotate);
-                }
+    const assignedId = state.assignments[slot.logical - 1];
+    const photo = state.photos.find(p => p.id === assignedId);
 
-                // Page Number Marker
-                ctx.save();
-                ctx.fillStyle = "rgba(120, 120, 120, 0.4)";
-                ctx.font = "bold 22px sans-serif";
-                ctx.fillText(`P.${cell.pageNum}`, x + 12, y + 28);
-                ctx.restore();
-            });
-        }
+    if (photo) {
+      const img = document.createElement("img");
+      img.src = photo.url;
+      img.className = `fit-${state.objectFit}`;
+      pageDiv.appendChild(img);
+    } else {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.innerHTML = `<div>P${slot.logical}</div>`;
+      pageDiv.appendChild(empty);
+    }
 
-        function drawPageImage(ctx, img, x, y, w, h, rotate180) {
-            ctx.save();
-            ctx.translate(x + w / 2, y + h / 2);
-            if (rotate180) {
-                ctx.rotate(Math.PI);
-            }
+    const label = document.createElement("div");
+    label.className = "label";
+    label.textContent = `P${slot.logical}`;
+    pageDiv.appendChild(label);
 
-            const imgAspect = img.width / img.height;
-            const cellAspect = w / h;
-            let drawW, drawH;
+    const border = document.createElement("div");
+    border.className = "border-overlay";
+    border.style.border = `${state.borderWidth * scale}px solid ${state.borderColor}`;
+    pageDiv.appendChild(border);
 
-            if (imgAspect > cellAspect) {
-                drawH = h;
-                drawW = h * imgAspect;
-            } else {
-                drawW = w;
-                drawH = w / imgAspect;
-            }
+    container.appendChild(pageDiv);
+  });
 
-            ctx.beginPath();
-            ctx.rect(-w / 2, -h / 2, w, h);
-            ctx.clip();
+  if (state.guides === 'yes') {
+    // Vertical folds
+    for (let i = 1; i < 4; i++) {
+      const vFold = document.createElement("div");
+      vFold.className = "foldline v";
+      vFold.style.left = (i * colW) + "px";
+      container.appendChild(vFold);
+    }
+    // Horizontal fold
+    const hFold = document.createElement("div");
+    hFold.className = "foldline h";
+    hFold.style.top = rowH + "px";
+    container.appendChild(hFold);
 
-            ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
-            ctx.restore();
-        }
+    // Center Slit Cut line (between middle columns)
+    const cut = document.createElement("div");
+    cut.className = "cutline";
+    cut.style.left = colW + "px";
+    cut.style.width = (colW * 2) + "px";
+    cut.style.top = rowH + "px";
+    container.appendChild(cut);
+  }
+}
 
-        function drawFoldGuides(cols, rows) {
-            ctx.save();
-            ctx.strokeStyle = "rgba(180, 180, 180, 0.35)";
-            ctx.lineWidth = 2;
-            ctx.setLineDash([12, 12]);
+function renderReaderPreview(container) {
+  // Simple reader view displaying pages sequentially side by side
+  container.style.width = "600px";
+  container.style.height = "400px";
+  container.style.background = "#1a1a1e";
+  container.style.display = "flex";
+  container.style.alignItems = "center";
+  container.style.justifyContent = "center";
+  container.style.color = "#aaa";
+  container.innerHTML = `<div style="text-align:center"><h3>Reader Spread Preview</h3><p>Page 8 (Back) | Page 1 (Cover)</p></div>`;
+}
 
-            const colW = canvas.width / cols;
-            for (let i = 1; i < cols; i++) {
-                ctx.beginPath();
-                ctx.moveTo(colW * i, 0);
-                ctx.lineTo(colW * i, canvas.height);
-                ctx.stroke();
-            }
+function renderCanvas(scaleFactor = 1) {
+  const [mmW, mmH] = paperDimensionsMM[state.paper];
+  const dpi = 300 * scaleFactor;
+  const mmToPx = dpi / 25.4;
 
-            const rowH = canvas.height / rows;
-            for (let j = 1; j < rows; j++) {
-                ctx.beginPath();
-                ctx.moveTo(0, rowH * j);
-                ctx.lineTo(canvas.width, rowH * j);
-                ctx.stroke();
-            }
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(mmW * mmToPx);
+  canvas.height = Math.round(mmH * mmToPx);
 
-            ctx.restore();
-        }
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = state.pageBg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Exports
-        function exportImage(mimeType) {
-            const link = document.createElement('a');
-            const ext = mimeType === 'image/tiff' ? 'tiff' : 'png';
-            link.download = `zine_sheet_${Date.now()}.${ext}`;
-            link.href = canvas.toDataURL(mimeType);
-            link.click();
-        }
+  const colW = canvas.width / 4;
+  const rowH = canvas.height / 2;
 
-        function exportJSON() {
-            const exportData = {
-                paperSize: document.getElementById('paperSize').value,
-                zineOrientation: document.getElementById('zineOrientation').value,
-                pageCount: document.getElementById('pageCount').value,
-                bgColor: document.getElementById('bgColor').value,
-                padding: document.getElementById('padding').value,
-                spacing: document.getElementById('spacing').value,
-                enableSpine: document.getElementById('enableSpine').checked,
-                spineGap: document.getElementById('spineGap').value,
-                pageSlots: pageSlots
-            };
+  zineSheetLayout.forEach(slot => {
+    const x = slot.col * colW;
+    const y = slot.row * rowH;
 
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
-            const dlAnchor = document.createElement('a');
-            dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", `zine_config_${Date.now()}.json`);
-            dlAnchor.click();
-        }
+    const assignedId = state.assignments[slot.logical - 1];
+    const photo = state.photos.find(p => p.id === assignedId);
 
-        document.getElementById('jsonInput').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+    ctx.save();
+    ctx.translate(x + colW / 2, y + rowH / 2);
+    if (slot.rotate) ctx.rotate((slot.rotate * Math.PI) / 180);
 
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const data = JSON.parse(event.target.result);
-                    if (data.paperSize) document.getElementById('paperSize').value = data.paperSize;
-                    if (data.zineOrientation) document.getElementById('zineOrientation').value = data.zineOrientation;
-                    if (data.pageCount) document.getElementById('pageCount').value = data.pageCount;
-                    if (data.bgColor) document.getElementById('bgColor').value = data.bgColor;
-                    if (data.padding) document.getElementById('padding').value = data.padding;
-                    if (data.spacing) document.getElementById('spacing').value = data.spacing;
-                    if (data.enableSpine !== undefined) document.getElementById('enableSpine').checked = data.enableSpine;
-                    if (data.spineGap) document.getElementById('spineGap').value = data.spineGap;
-                    if (data.pageSlots) pageSlots = data.pageSlots;
+    const drawW = colW - (state.gap * mmToPx);
+    const drawH = rowH - (state.gap * mmToPx);
 
-                    updatePageSlots();
-                    render();
-                } catch (err) {
-                    alert("Invalid JSON configuration file.");
-                }
-            };
-            reader.readAsText(file);
-        });
-    </script>
+    if (photo) {
+      const img = photo.img;
+      let nw = img.naturalWidth, nh = img.naturalHeight;
+      let renderW = drawW, renderH = drawH;
+
+      if (state.objectFit === 'cover') {
+        const ratio = Math.max(drawW / nw, drawH / nh);
+        renderW = nw * ratio;
+        renderH = nh * ratio;
+      } else {
+        const ratio = Math.min(drawW / nw, drawH / nh);
+        renderW = nw * ratio;
+        renderH = nh * ratio;
+      }
+
+      ctx.beginPath();
+      ctx.rect(-drawW / 2, -drawH / 2, drawW, drawH);
+      ctx.clip();
+      ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
+    }
+
+    if (state.borderWidth > 0) {
+      ctx.strokeStyle = state.borderColor;
+      ctx.lineWidth = state.borderWidth * mmToPx;
+      ctx.strokeRect(-drawW / 2, -drawH / 2, drawW, drawH);
+    }
+
+    ctx.restore();
+  });
+
+  return canvas;
+}
+
+function exportHighResPNG() {
+  const canvas = renderCanvas(1);
+  canvas.toBlob(blob => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `zine-imposition-${state.paper}.png`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }, "image/png");
+}
+
+function exportJSON() {
+  const data = {
+    app: "Zine Studio",
+    version: 2,
+    state: {
+      paper: state.paper,
+      objectFit: state.objectFit,
+      margin: state.margin,
+      gap: state.gap,
+      borderWidth: state.borderWidth,
+      borderColor: state.borderColor,
+      pageBg: state.pageBg,
+      assignments: state.assignments
+    }
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "zine-config.json";
+  a.click();
+}
+
+async function importJSONFile(file) {
+  if (!file) return;
+  try {
+    const content = await file.text();
+    const parsed = JSON.parse(content);
+    if (parsed.state) {
+      Object.assign(state, parsed.state);
+      renderPageGrid();
+      renderPreview();
+    }
+  } catch (err) {
+    alert("Failed to load project config.");
+  }
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
+}
+
+window.onload = init;
+</script>
 </body>
 </html>
