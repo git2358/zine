@@ -8,9 +8,9 @@
         :root {
             --bg-color: #121212;
             --panel-bg: #1e1e1e;
-            --accent-color: #007acc;
-            --text-color: #e0e0e0;
-            --border-color: #333;
+            --accent-color: #2563eb;
+            --text-color: #f3f4f6;
+            --border-color: #374151;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -33,11 +33,12 @@
             flex-direction: column;
             z-index: 10;
             box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+            flex-shrink: 0;
         }
 
         .sidebar-header {
             padding: 16px;
-            background-color: #252526;
+            background-color: #111827;
             border-bottom: 1px solid var(--border-color);
             font-size: 1.1rem;
             font-weight: bold;
@@ -49,25 +50,24 @@
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 18px;
         }
 
         .control-group {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            background: #252526;
+            gap: 10px;
+            background: #1f2937;
             padding: 12px;
             border-radius: 6px;
             border: 1px solid var(--border-color);
         }
 
         .control-group h3 {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            color: #888;
-            margin-bottom: 4px;
+            color: #9ca3af;
         }
 
         label {
@@ -77,17 +77,17 @@
             align-items: center;
         }
 
-        input[type="number"], select, input[type="color"], input[type="file"] {
-            background: #333;
-            border: 1px solid #444;
+        input[type="number"], select, input[type="color"] {
+            background: #374151;
+            border: 1px solid #4b5563;
             color: #fff;
-            padding: 6px 10px;
+            padding: 6px 8px;
             border-radius: 4px;
-            width: 100%;
+            width: 55%;
         }
 
         input[type="range"] {
-            width: 60%;
+            width: 55%;
         }
 
         .inline-label {
@@ -95,6 +95,7 @@
             align-items: center;
             gap: 8px;
             cursor: pointer;
+            justify-content: flex-start;
         }
 
         .inline-label input[type="checkbox"] {
@@ -108,7 +109,7 @@
             gap: 8px;
             max-height: 220px;
             overflow-y: auto;
-            background: #1a1a1a;
+            background: #111827;
             padding: 8px;
             border-radius: 4px;
         }
@@ -117,7 +118,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            background: #2a2a2a;
+            background: #1f2937;
             padding: 6px;
             border-radius: 4px;
             font-size: 0.8rem;
@@ -125,6 +126,7 @@
 
         .page-item select {
             flex-grow: 1;
+            width: auto;
         }
 
         /* Buttons */
@@ -152,7 +154,7 @@
         }
 
         .btn-secondary {
-            background-color: #444;
+            background-color: #4b5563;
         }
 
         input[type="file"].hidden-input {
@@ -162,17 +164,16 @@
         /* Preview Workspace */
         #workspace {
             flex-grow: 1;
-            background-color: #181818;
+            background-color: #0b0f19;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 24px;
             overflow: auto;
-            position: relative;
         }
 
         #canvas-container {
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.9);
             background: #fff;
             max-width: 100%;
             max-height: 100%;
@@ -188,7 +189,6 @@
             object-fit: contain;
         }
 
-        /* Mobile responsiveness */
         @media (max-width: 768px) {
             body {
                 flex-direction: column-reverse;
@@ -206,82 +206,81 @@
 </head>
 <body>
 
-    <!-- SIDEBAR CONTROLS -->
     <div id="sidebar">
-        <div class="sidebar-header">Zine Layout Studio</div>
+        <div class="sidebar-header">Photo Zine Layout Studio</div>
         <div class="sidebar-content">
 
-            <!-- 1. Media Upload -->
+            <!-- Load Files & Projects -->
             <div class="control-group">
                 <h3>1. Photos & Project</h3>
                 <label class="file-btn">
-                    📷 Load Images
+                    📷 Upload Photos
                     <input type="file" id="imageInput" multiple accept="image/*" class="hidden-input">
                 </label>
                 <div class="btn-grid">
                     <label class="file-btn btn-secondary">
-                        📥 Import JSON
+                        📥 Load JSON
                         <input type="file" id="jsonInput" accept=".json" class="hidden-input">
                     </label>
-                    <button class="btn-secondary" onclick="exportJSON()">📤 Export JSON</button>
+                    <button class="btn-secondary" onclick="exportJSON()">📤 Save JSON</button>
                 </div>
             </div>
 
-            <!-- 2. Format & Layout Config -->
+            <!-- Paper & Zine Formatting -->
             <div class="control-group">
-                <h3>2. Print Settings</h3>
-                <label>Paper Format
+                <h3>2. Paper & Orientation</h3>
+                <label>Paper Size
                     <select id="paperSize" onchange="render()">
                         <option value="a4">A4 (297 × 210 mm)</option>
                         <option value="a3">A3 (420 × 297 mm)</option>
                         <option value="letter">US Letter (11 × 8.5 in)</option>
+                        <option value="tabloid">US Tabloid (17 × 11 in)</option>
                     </select>
                 </label>
-                <label>Page Orientation
+                <label>Zine Fold Orientation
                     <select id="zineOrientation" onchange="render()">
                         <option value="portrait">Portrait Pages</option>
                         <option value="landscape">Landscape Pages</option>
                     </select>
                 </label>
-                <label>Pages per Sheet
+                <label>Page Count
                     <select id="pageCount" onchange="updatePageSlots(); render();">
                         <option value="8">8 Pages (1 Sheet)</option>
-                        <option value="16">16 Pages (1 Sheet Folding)</option>
                     </select>
                 </label>
             </div>
 
-            <!-- 3. Styling & Margins -->
+            <!-- Margins & Hassan Style Spine Offset -->
             <div class="control-group">
-                <h3>3. Layout & Style Settings</h3>
-                <label>Background Color
+                <h3>3. Spacing & Spine Margins</h3>
+                <label>Paper Background
                     <input type="color" id="bgColor" value="#ffffff" onchange="render()">
                 </label>
-                <label>Outer Padding: <span id="paddingVal">10</span>px
-                    <input type="range" id="padding" min="0" max="50" value="10" oninput="document.getElementById('paddingVal').innerText=this.value; render()">
+                <label>Outer Margin: <span id="paddingVal">15</span>px
+                    <input type="range" id="padding" min="0" max="60" value="15" oninput="document.getElementById('paddingVal').innerText=this.value; render()">
                 </label>
-                <label>Image Spacing: <span id="spacingVal">5</span>px
-                    <input type="range" id="spacing" min="0" max="30" value="5" oninput="document.getElementById('spacingVal').innerText=this.value; render()">
+                <label>Page Gap: <span id="spacingVal">10</span>px
+                    <input type="range" id="spacing" min="0" max="40" value="10" oninput="document.getElementById('spacingVal').innerText=this.value; render()">
                 </label>
                 <label class="inline-label">
-                    <input type="checkbox" id="enableSpine" onchange="render()">
-                    <span>Include Folding Spine Gap Layout (Emon Hassan Style)</span>
+                    <input type="checkbox" id="enableSpine" checked onchange="render()">
+                    <span>Enable Spine Fold Margins</span>
                 </label>
-                <label>Spine Width Offset: <span id="spineVal">15</span>px
-                    <input type="range" id="spineGap" min="0" max="60" value="15" oninput="document.getElementById('spineVal').innerText=this.value; render()">
+                <label>Spine Width: <span id="spineVal">20</span>px
+                    <input type="range" id="spineGap" min="0" max="80" value="20" oninput="document.getElementById('spineVal').innerText=this.value; render()">
                 </label>
             </div>
 
-            <!-- 4. Page Sequence and Panoramic Spans -->
+            <!-- Sequence and Panoramas -->
             <div class="control-group">
-                <h3>4. Page Ordering & Panoramas</h3>
-                <p style="font-size: 0.75rem; color:#aaa;">Assign images to zine pages. Check "Panoramic Span" to strip inner borders with the adjacent page.</p>
+                <h3>4. Sequence & Panoramic Spreads</h3>
+                <p style="font-size: 0.75rem; color:#9ca3af;">Check "Panoramic Span" to merge adjacent facing pages into an uninterrupted double-page photo spread.</p>
                 <div class="page-list" id="pageSlotContainer"></div>
             </div>
 
-            <!-- 5. Exports -->
+            <!-- Render/Exports -->
             <div class="control-group">
-                <h3>5. Render & Export</h3>
+                <h3>5. Export Print Layout</h3>
                 <div class="btn-grid">
                     <button onclick="exportImage('image/png')">Save PNG</button>
                     <button onclick="exportImage('image/tiff')">Save TIFF</button>
@@ -291,7 +290,7 @@
         </div>
     </div>
 
-    <!-- LIVE PREVIEW CANVAS WORKSPACE -->
+    <!-- Live WYSIWYG Workspace -->
     <div id="workspace">
         <div id="canvas-container">
             <canvas id="zineCanvas"></canvas>
@@ -299,19 +298,18 @@
     </div>
 
     <script>
-        // Store state variables
-        let uploadedImages = []; // Array of { id, name, src, imgObject }
-        let pageSlots = [];      // Array of { pageNum, imageId, isFrontCover, isBackCover, isPanoramaNext }
-        
-        // Canvas Setup
+        let uploadedImages = []; 
+        let pageSlots = [];      
+
         const canvas = document.getElementById('zineCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Dimensions setup in points/pixels for high-res render (300 DPI target)
+        // Target Print Render Dimensions @ 300 DPI (Pixels)
         const paperDimensions = {
             'a4': { w: 3508, h: 2480 },
             'a3': { w: 4960, h: 3508 },
-            'letter': { w: 3300, h: 2550 }
+            'letter': { w: 3300, h: 2550 },
+            'tabloid': { w: 5100, h: 3300 }
         };
 
         window.onload = () => {
@@ -319,12 +317,11 @@
             render();
         };
 
-        // File Loading
         document.getElementById('imageInput').addEventListener('change', (e) => {
             const files = Array.from(e.target.files);
             let loadedCount = 0;
 
-            files.forEach((file, index) => {
+            files.forEach((file) => {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const img = new Image();
@@ -395,10 +392,10 @@
                 const hidePan = (index === pageSlots.length - 1) ? 'style="display:none;"' : '';
 
                 div.innerHTML = `
-                    <span style="width: 100px;">${labelText}</span>
+                    <span style="width: 110px;">${labelText}</span>
                     <select onchange="assignImageToPage(${slot.pageNum}, this.value)">${options}</select>
                     <label class="inline-label" ${hidePan} title="Connect borderlessly with Page ${slot.pageNum + 1}">
-                        <input type="checkbox" ${panChecked} onchange="togglePanorama(${slot.pageNum}, this.checked)"> Panoramic Span ➔
+                        <input type="checkbox" ${panChecked} onchange="togglePanorama(${slot.pageNum}, this.checked)"> Panoramic
                     </label>
                 `;
                 container.appendChild(div);
@@ -417,7 +414,7 @@
             render();
         }
 
-        // --- Core Rendering Engine ---
+        // Core Layout & Rendering Engine
         function render() {
             const paperType = document.getElementById('paperSize').value;
             const dim = paperDimensions[paperType];
@@ -430,28 +427,25 @@
             const enableSpine = document.getElementById('enableSpine').checked;
             const spineGap = enableSpine ? parseInt(document.getElementById('spineGap').value) * 3 : 0;
             const bgColor = document.getElementById('bgColor').value;
+            const zineOrientation = document.getElementById('zineOrientation').value;
 
-            // Clear Background
+            // Fill canvas background
             ctx.fillStyle = bgColor;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Print fold guidelines
-            drawFoldLines();
+            // Configure Grid Matrix based on Page Orientation
+            let cols, rows, layoutGrid;
 
-            // 8-Page Standard One-Sheet Grid Layout Definition
-            // Traditional 8-Page Fold Arrangement Map (Top row is upside down relative to paper):
-            // Top Row (Rotated 180 deg): Page 10 (or 8), Page 1, Page 8 (Back Cover), Page 5 ...
-            // Standard 8 Page single sheet order mapping across grid cells (2 rows x 4 cols):
-            // Cell Layout:
-            // [ Page 8 (Upside-Down) ][ Page 1 Front (Upside-Down) ][ Page 6 (Upside-Down) ][ Page 7 (Upside-Down) ]
-            // [ Page 3               ][ Page 4                     ][ Page 5               ][ Page 2               ]
-            
-            const totalPages = parseInt(document.getElementById('pageCount').value);
-
-            // Cell layout definition matrix: { cellX, cellY, pageNum, rotate180 }
-            let layoutGrid = [];
-
-            if (totalPages === 8) {
+            if (zineOrientation === 'portrait') {
+                // Portrait Zine: Paper divided into 2 Rows x 4 Columns
+                cols = 4;
+                rows = 2;
+                
+                // Standard 8-page Emon Hassan One-Sheet Fold Sequence
+                // Top Row (Upside down relative to paper sheet orientation):
+                // [ Page 8 (Back) ][ Page 1 (Front) ][ Page 6 ][ Page 5 ]
+                // Bottom Row (Right side up):
+                // [ Page 7        ][ Page 2         ][ Page 3 ][ Page 4 ]
                 layoutGrid = [
                     { col: 0, row: 0, pageNum: 8, rotate: true },
                     { col: 1, row: 0, pageNum: 1, rotate: true },
@@ -463,18 +457,24 @@
                     { col: 3, row: 1, pageNum: 4, rotate: false }
                 ];
             } else {
-                // 16-page grid layout option (4x4 arrangement)
-                layoutGrid = [];
-                let p = 1;
-                for (let r = 0; r < 4; r++) {
-                    for (let c = 0; c < 4; c++) {
-                        layoutGrid.push({ col: c, row: r, pageNum: p++, rotate: (r < 2) });
-                    }
-                }
+                // Landscape Zine: Paper divided into 4 Rows x 2 Columns
+                cols = 2;
+                rows = 4;
+
+                // Landscape fold sequence map
+                layoutGrid = [
+                    { col: 0, row: 0, pageNum: 8, rotate: true },
+                    { col: 1, row: 0, pageNum: 1, rotate: true },
+                    { col: 0, row: 1, pageNum: 6, rotate: true },
+                    { col: 1, row: 1, pageNum: 5, rotate: true },
+                    { col: 0, row: 2, pageNum: 7, rotate: false },
+                    { col: 1, row: 2, pageNum: 2, rotate: false },
+                    { col: 0, row: 3, pageNum: 3, rotate: false },
+                    { col: 1, row: 3, pageNum: 4, rotate: false }
+                ];
             }
 
-            const cols = totalPages === 8 ? 4 : 4;
-            const rows = totalPages === 8 ? 2 : 4;
+            drawFoldGuides(cols, rows);
 
             const cellWidth = (canvas.width - (padding * 2)) / cols;
             const cellHeight = (canvas.height - (padding * 2)) / rows;
@@ -485,44 +485,54 @@
 
                 const imgObj = uploadedImages.find(i => i.id === slot.imageId);
 
-                // Compute Bounding Box for cell with spine & spacing
                 let x = padding + cell.col * cellWidth;
                 let y = padding + cell.row * cellHeight;
                 let w = cellWidth;
                 let h = cellHeight;
 
-                // Apply Spine offset margins (shifting outer edge for spine wrap)
+                // Apply Hassan Spine Margins (Shifts margins inwards away from spine fold line)
                 if (enableSpine) {
-                    if (cell.col < cols / 2) {
-                        x += spineGap / 2;
-                        w -= spineGap / 2;
+                    if (zineOrientation === 'portrait') {
+                        if (cell.col % 2 === 0) {
+                            x += spineGap;
+                            w -= spineGap;
+                        } else {
+                            w -= spineGap;
+                        }
                     } else {
-                        w -= spineGap / 2;
+                        if (cell.row % 2 === 0) {
+                            y += spineGap;
+                            h -= spineGap;
+                        } else {
+                            h -= spineGap;
+                        }
                     }
                 }
 
-                // Check for Panorama seamlessly removing spacing between current and next page
-                let applySpacingRight = true;
+                // Check for Panoramic Span (Strips gap with adjacent facing page)
+                let applyGapRight = true;
+                let applyGapBottom = true;
+
                 if (slot.isPanoramaNext) {
-                    applySpacingRight = false; // Disable right gap for panoramic span
+                    if (zineOrientation === 'portrait') applyGapRight = false;
+                    else applyGapBottom = false;
                 }
 
-                // Inner spacing adjustments
-                const padSpacing = spacing / 2;
-                x += padSpacing;
-                y += padSpacing;
-                w -= applySpacingRight ? spacing : padSpacing;
-                h -= spacing;
+                const padGap = spacing / 2;
+                x += padGap;
+                y += padGap;
+                w -= applyGapRight ? spacing : padGap;
+                h -= applyGapBottom ? spacing : padGap;
 
                 if (imgObj && imgObj.element) {
                     drawPageImage(ctx, imgObj.element, x, y, w, h, cell.rotate);
                 }
 
-                // Page Label Guide on canvas (small light print)
+                // Draw non-intrusive page label markers
                 ctx.save();
-                ctx.fillStyle = "rgba(150,150,150,0.5)";
-                ctx.font = "24px sans-serif";
-                ctx.fillText(`P.${cell.pageNum}`, x + 10, y + 30);
+                ctx.fillStyle = "rgba(120, 120, 120, 0.4)";
+                ctx.font = "bold 22px sans-serif";
+                ctx.fillText(`P.${cell.pageNum}`, x + 12, y + 28);
                 ctx.restore();
             });
         }
@@ -534,7 +544,7 @@
                 ctx.rotate(Math.PI);
             }
 
-            // Calculate Object Fit Cover dimensions inside cell
+            // Perform proportional aspect-fill calculation
             const imgAspect = img.width / img.height;
             const cellAspect = w / h;
             let drawW, drawH;
@@ -547,40 +557,46 @@
                 drawH = w / imgAspect;
             }
 
-            // Clip to cell boundary
             ctx.beginPath();
             ctx.rect(-w / 2, -h / 2, w, h);
             ctx.clip();
 
-            // Draw image centered inside box
             ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
             ctx.restore();
         }
 
-        function drawFoldLines() {
+        function drawFoldGuides(cols, rows) {
             ctx.save();
-            ctx.strokeStyle = "rgba(200, 200, 200, 0.4)";
-            ctx.lineWidth = 3;
-            ctx.setLineDash([15, 15]);
+            ctx.strokeStyle = "rgba(180, 180, 180, 0.35)";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([12, 12]);
 
-            // Draw center folding axes
-            ctx.beginPath();
-            // Vertical center fold
-            ctx.moveTo(canvas.width / 2, 0);
-            ctx.lineTo(canvas.width / 2, canvas.height);
-            // Horizontal center fold
-            ctx.moveTo(0, canvas.height / 2);
-            ctx.lineTo(canvas.width, canvas.height / 2);
-            ctx.stroke();
+            // Draw Column dividers
+            const colW = canvas.width / cols;
+            for (let i = 1; i < cols; i++) {
+                ctx.beginPath();
+                ctx.moveTo(colW * i, 0);
+                ctx.lineTo(colW * i, canvas.height);
+                ctx.stroke();
+            }
+
+            // Draw Row dividers
+            const rowH = canvas.height / rows;
+            for (let j = 1; j < rows; j++) {
+                ctx.beginPath();
+                ctx.moveTo(0, rowH * j);
+                ctx.lineTo(canvas.width, rowH * j);
+                ctx.stroke();
+            }
 
             ctx.restore();
         }
 
-        // --- Export Functions ---
+        // Export Actions
         function exportImage(mimeType) {
             const link = document.createElement('a');
             const ext = mimeType === 'image/tiff' ? 'tiff' : 'png';
-            link.download = `zine_layout_${Date.now()}.${ext}`;
+            link.download = `zine_sheet_${Date.now()}.${ext}`;
             link.href = canvas.toDataURL(mimeType);
             link.click();
         }
@@ -621,13 +637,12 @@
                     if (data.spacing) document.getElementById('spacing').value = data.spacing;
                     if (data.enableSpine !== undefined) document.getElementById('enableSpine').checked = data.enableSpine;
                     if (data.spineGap) document.getElementById('spineGap').value = data.spineGap;
-                    
                     if (data.pageSlots) pageSlots = data.pageSlots;
 
                     updatePageSlots();
                     render();
                 } catch (err) {
-                    alert("Invalid JSON file uploaded.");
+                    alert("Invalid JSON configuration file.");
                 }
             };
             reader.readAsText(file);
