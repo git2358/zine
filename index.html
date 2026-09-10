@@ -136,7 +136,7 @@ button.small { padding: 4px 8px; font-size: 0.78rem; }
           <input id="margin" type="number" min="0" max="30" step="0.5" value="4">
         </div>
         <div class="field">
-          <label>Spine Fold-Over Margin (mm)</label>
+          <label>Spine Fold-Over Shift (mm)</label>
           <input id="spineGap" type="number" min="0" max="25" step="0.5" value="5">
         </div>
       </div>
@@ -244,7 +244,7 @@ const oneSheetLayouts = {
       { logical: 4,  rotate: 180, col: 2, row: 2 },
       { logical: 3,  rotate: 180, col: 3, row: 2 },
 
-      { logical: 16, rotate: 0,   col: 0, row: 3, customLabel: 'BACK COVER' },
+      { logical: 16, rotate: 0,   col: 0, row: 3, customLabel: 'BACK COVER', isBackCover: true },
       { logical: 1,  rotate: 0,   col: 1, row: 3, customLabel: 'FRONT COVER' },
       { logical: 2,  rotate: 0,   col: 2, row: 3, customLabel: '1' },
       { logical: 15, rotate: 0,   col: 3, row: 3, customLabel: '2' }
@@ -417,32 +417,26 @@ function renderPreview() {
   const layout = oneSheetLayouts[state.pageCount];
   const colW = width / layout.cols;
   const rowH = height / layout.rows;
-  const spinePx = (state.spineGap / mmW) * width;
+  
+  // Shift value = half of the configured spineGap (converted to px)
+  const shiftPx = ((state.spineGap / 2) / mmW) * width;
 
   layout.slots.forEach(slot => {
     const pageDiv = document.createElement("div");
     pageDiv.className = `page ${slot.rotate === 180 ? 'flipped' : ''}`;
     
-    const leftPos = slot.col * colW;
+    let leftPos = slot.col * colW;
+    
+    // Shift ONLY the Back Cover panel to the left by half the spine margin
+    if (slot.isBackCover) {
+      leftPos -= shiftPx;
+    }
 
     pageDiv.style.left = leftPos + "px";
     pageDiv.style.top = (slot.row * rowH) + "px";
     pageDiv.style.width = colW + "px";
     pageDiv.style.height = rowH + "px";
-    
-    let extraLeft = 0;
-    let extraRight = 0;
-    if (slot.logical === 16) {
-      extraRight = spinePx;
-    } else if (slot.logical === 1) {
-      extraLeft = spinePx;
-    }
-
-    const padTopBottom = (state.margin / mmW * width);
-    pageDiv.style.paddingTop = padTopBottom + "px";
-    pageDiv.style.paddingBottom = padTopBottom + "px";
-    pageDiv.style.paddingLeft = ((state.margin / mmW * width) + extraLeft) + "px";
-    pageDiv.style.paddingRight = ((state.margin / mmW * width) + extraRight) + "px";
+    pageDiv.style.padding = (state.margin / mmW * width) + "px";
 
     const assignedId = state.assignments[slot.logical - 1];
     const photo = state.photos.find(p => p.id === assignedId);
@@ -503,12 +497,6 @@ function renderPreview() {
       hFold.style.top = (r * rowH) + "px";
       container.appendChild(hFold);
     }
-    if (spinePx > 0) {
-      const spineFold = document.createElement("div");
-      spineFold.className = "foldline v spine";
-      spineFold.style.left = (colW + spinePx) + "px";
-      container.appendChild(spineFold);
-    }
   }
 }
 
@@ -531,10 +519,13 @@ function exportPNG() {
   const layout = oneSheetLayouts[state.pageCount];
   const colW = canvas.width / layout.cols;
   const rowH = canvas.height / layout.rows;
-  const spinePx = state.spineGap * mmToPx;
+  const shiftPx = (state.spineGap / 2) * mmToPx;
 
   layout.slots.forEach(slot => {
-    const x = slot.col * colW;
+    let x = slot.col * colW;
+    if (slot.isBackCover) {
+      x -= shiftPx;
+    }
     const y = slot.row * rowH;
 
     const assignedId = state.assignments[slot.logical - 1];
@@ -543,17 +534,11 @@ function exportPNG() {
     const effectiveFit = meta.fit === 'global' ? state.objectFit : meta.fit;
 
     const marginPx = state.margin * mmToPx;
-    let extraLeft = 0;
-    let extraRight = 0;
-
-    if (slot.logical === 16) extraRight = spinePx;
-    else if (slot.logical === 1) extraLeft = spinePx;
-
-    const drawW = colW - (marginPx * 2) - extraLeft - extraRight;
+    const drawW = colW - (marginPx * 2);
     const drawH = rowH - (marginPx * 2);
 
     ctx.save();
-    ctx.translate(x + colW / 2 + (extraLeft - extraRight) / 2, y + rowH / 2);
+    ctx.translate(x + colW / 2, y + rowH / 2);
     if (slot.rotate) ctx.rotate((slot.rotate * Math.PI) / 180);
 
     if (photo) {
@@ -608,7 +593,7 @@ function exportPNG() {
 function exportJSON() {
   const data = {
     app: "One-Sheet Zine Studio",
-    version: 8,
+    version: 9,
     state: {
       pageCount: state.pageCount,
       sheetOrientation: state.sheetOrientation,
