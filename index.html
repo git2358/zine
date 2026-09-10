@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Local Zine Imposer Studio</title>
+<title>One-Sheet Zine Imposer</title>
 <style>
 :root {
-  --bg: #171717; --panel: #222222; --panel2: #2b2b2b; --line: #444444;
+  --bg: #171717; --panel: #222222; --line: #444444;
   --text: #f4f4f4; --muted: #aaaaaa; --accent: #4f80ff; --accent-hover: #6692ff;
-  --danger: #e5484d; --paper: #ffffff; --ink: #111111;
+  --danger: #e5484d; --paper: #ffffff;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -26,7 +26,6 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
 .topbar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 5; }
 .topbar h1 { font-size: 1rem; margin: 0; font-weight: 600; white-space: nowrap; }
 .topbar .spacer { flex: 1; }
-.sheet-nav { display: flex; align-items: center; gap: 8px; background: #111; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line); font-size: 0.85rem; }
 .preview-wrap { padding: 20px; overflow: auto; flex: 1; display: flex; justify-content: center; align-items: center; }
 #paperPreview { position: relative; background: var(--paper); box-shadow: 0 12px 40px rgba(0,0,0,0.6); overflow: hidden; }
 .page { position: absolute; overflow: hidden; background: var(--page-bg, #fff); box-sizing: border-box; }
@@ -34,13 +33,12 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
 .page img { width: 100%; height: 100%; display: block; }
 .page img.fit-cover { object-fit: cover; }
 .page img.fit-contain { object-fit: contain; }
-.page .empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-size: 11px; text-align: center; padding: 6px; border: 1px dashed #ccc; margin: 4px; }
+.page .empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-size: 11px; text-align: center; padding: 4px; border: 1px dashed #ccc; margin: 2px; }
 .page .border-overlay { position: absolute; inset: 0; pointer-events: none; }
-.page .label { position: absolute; left: 4px; top: 4px; font-size: 9px; font-weight: 700; color: #333; background: rgba(255,255,255,0.85); padding: 1px 4px; border-radius: 3px; z-index: 2; border: 1px solid #ddd; }
+.page .label { position: absolute; left: 3px; top: 3px; font-size: 9px; font-weight: 700; color: #333; background: rgba(255,255,255,0.85); padding: 1px 3px; border-radius: 3px; z-index: 2; border: 1px solid #ddd; }
 .foldline { position: absolute; z-index: 3; pointer-events: none; }
 .foldline.v { top: 0; bottom: 0; border-left: 1px dashed #999; }
 .foldline.h { left: 0; right: 0; border-top: 1px dashed #999; }
-.cutline { position: absolute; z-index: 4; pointer-events: none; border-top: 2px dashed #e5484d; }
 
 .sidebar { background: var(--panel); border-left: 1px solid var(--line); overflow-y: auto; }
 .section { padding: 16px; border-bottom: 1px solid var(--line); }
@@ -57,7 +55,7 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
 .page-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 380px; overflow-y: auto; padding-right: 4px; }
 .page-card { background: #181818; border: 1px solid var(--line); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
 .page-card .header { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; font-weight: 600; color: var(--muted); }
-.page-card .thumb-box { height: 70px; background: #000; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid #333; }
+.page-card .thumb-box { height: 60px; background: #000; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid #333; }
 .page-card .thumb-box img { width: 100%; height: 100%; object-fit: cover; }
 .page-card select { font-size: 0.75rem; padding: 4px; width: 100%; background: #111; color: #fff; border: 1px solid #444; border-radius: 4px; }
 
@@ -75,14 +73,9 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
 <div class="app">
   <main class="preview-area">
     <div class="topbar">
-      <h1>Zine Studio</h1>
-      <div class="sheet-nav">
-        <button id="prevSheetBtn" class="small">&lt;</button>
-        <span id="sheetIndicator">Sheet 1 / 1</span>
-        <button id="nextSheetBtn" class="small">&gt;</button>
-      </div>
+      <h1>Local Zine Imposer (One Sheet)</h1>
       <div class="spacer"></div>
-      <button id="printBtn" class="primary">Print / PDF</button>
+      <button id="printBtn" class="primary">Print / Save PDF</button>
     </div>
     <div id="previewWrap" class="preview-wrap">
       <div id="paperPreview"></div>
@@ -107,8 +100,11 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
       <h2>2. Zine & Paper Setup</h2>
       <div class="grid2">
         <div class="field">
-          <label>Pages</label>
-          <select id="pageCount"><option value="8">8 Pages (1 Sheet)</option><option value="16">16 Pages (2 Sheets)</option></select>
+          <label>Layout Mode</label>
+          <select id="pageCount">
+            <option value="8">8 Pages (2×4 Grid)</option>
+            <option value="16">16 Pages (4×4 Grid)</option>
+          </select>
         </div>
         <div class="field">
           <label>Paper Size</label>
@@ -118,7 +114,7 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
       <div class="grid2">
         <div class="field">
           <label>Image Fit</label>
-          <select id="objectFit"><option value="cover">Cover (Fill & Crop)</option><option value="contain">Contain (Fit Whole)</option></select>
+          <select id="objectFit"><option value="cover">Cover (Crop)</option><option value="contain">Contain (Fit)</option></select>
         </div>
         <div class="field">
           <label>Outer Margin (mm)</label>
@@ -145,27 +141,27 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
           <input id="pageBg" type="color" value="#ffffff">
         </div>
         <div class="field">
-          <label>Fold & Cut Guides</label>
+          <label>Fold Guides</label>
           <select id="guides"><option value="yes">Show Guides</option><option value="no">Hide Guides</option></select>
         </div>
       </div>
     </div>
 
     <div class="section">
-      <h2>4. Logical Page Imposition</h2>
-      <div class="help" style="margin-bottom:10px">Assign uploaded photos to reader page numbers. Imposition and upside-down rotations are generated automatically for folding.</div>
+      <h2>4. Page Assignments</h2>
+      <div class="help" style="margin-bottom:10px">Assign uploaded photos to reader page numbers. Pages on top rows automatically rotate $180^\circ$ for single-sided folding.</div>
       <div id="pageGrid" class="page-grid"></div>
     </div>
 
     <div class="section">
-      <h2>5. Export</h2>
+      <h2>5. Export Options</h2>
       <div class="actions">
-        <button id="pngBtn" class="primary">Export PNG (Current Sheet)</button>
-        <button id="jsonOut">Save Project</button>
-        <button id="jsonIn">Load Project</button>
+        <button id="pngBtn" class="primary">Export PNG (300 DPI)</button>
+        <button id="jsonOut">Save Settings</button>
+        <button id="jsonIn">Load Settings</button>
         <input id="jsonInput" type="file" accept=".json" hidden>
       </div>
-      <div id="status" class="status" style="margin-top:10px">Local rendering ready.</div>
+      <div id="status" class="status" style="margin-top:10px">Single-sheet imposition ready.</div>
     </div>
   </aside>
 </div>
@@ -178,7 +174,6 @@ const $ = id => document.getElementById(id);
 const state = {
   photos: [],
   pageCount: 8,
-  currentSheet: 0, // 0-indexed sheet pointer
   assignments: Array(8).fill(null),
   paper: 'A4',
   objectFit: 'cover',
@@ -195,12 +190,12 @@ const paperDimensionsMM = {
   "US Letter": [279.4, 215.9]
 };
 
-/* Imposition schemes (8-page mini-zine layout per sheet: 2 rows x 4 cols)
-   Row 0 is rotated 180deg for 1-sheet mini zine folding. */
-const sheetLayouts = {
-  8: [
-    // Sheet 1 (Side A / Main 8-page Zine)
-    [
+/* Single-Sheet Imposition Schemes */
+const oneSheetLayouts = {
+  // 8-Page Mini-Zine Layout (2 rows × 4 cols)
+  8: {
+    cols: 4, rows: 2,
+    slots: [
       { logical: 5, rotate: 180, col: 0, row: 0 },
       { logical: 4, rotate: 180, col: 1, row: 0 },
       { logical: 3, rotate: 180, col: 2, row: 0 },
@@ -210,31 +205,33 @@ const sheetLayouts = {
       { logical: 2, rotate: 0,   col: 2, row: 1 },
       { logical: 7, rotate: 0,   col: 3, row: 1 }
     ]
-  ],
-  16: [
-    // Sheet 1 (Pages 1-8 logic)
-    [
-      { logical: 5, rotate: 180, col: 0, row: 0 },
-      { logical: 4, rotate: 180, col: 1, row: 0 },
-      { logical: 3, rotate: 180, col: 2, row: 0 },
-      { logical: 6, rotate: 180, col: 3, row: 0 },
-      { logical: 16, rotate: 0,  col: 0, row: 1 },
-      { logical: 1, rotate: 0,   col: 1, row: 1 },
-      { logical: 2, rotate: 0,   col: 2, row: 1 },
-      { logical: 15, rotate: 0,  col: 3, row: 1 }
-    ],
-    // Sheet 2 (Pages 9-16 logic)
-    [
-      { logical: 13, rotate: 180, col: 0, row: 0 },
-      { logical: 12, rotate: 180, col: 1, row: 0 },
-      { logical: 11, rotate: 180, col: 2, row: 0 },
-      { logical: 14, rotate: 180, col: 3, row: 0 },
-      { logical: 8, rotate: 0,    col: 0, row: 1 },
-      { logical: 9, rotate: 0,    col: 1, row: 1 },
-      { logical: 10, rotate: 0,   col: 2, row: 1 },
-      { logical: 7, rotate: 0,    col: 3, row: 1 }
+  },
+  // 16-Page Micro-Zine Layout (4 rows × 4 cols on a single sheet)
+  16: {
+    cols: 4, rows: 4,
+    slots: [
+      // Row 0 (Top row - rotated 180deg)
+      { logical: 9,  rotate: 180, col: 0, row: 0 },
+      { logical: 8,  rotate: 180, col: 1, row: 0 },
+      { logical: 7,  rotate: 180, col: 2, row: 0 },
+      { logical: 10, rotate: 180, col: 3, row: 0 },
+      // Row 1 (Second row - rotated 180deg)
+      { logical: 12, rotate: 180, col: 0, row: 1 },
+      { logical: 5,  rotate: 180, col: 1, row: 1 },
+      { logical: 6,  rotate: 180, col: 2, row: 1 },
+      { logical: 11, rotate: 180, col: 3, row: 1 },
+      // Row 2 (Third row - normal orientation)
+      { logical: 13, rotate: 0,   col: 0, row: 2 },
+      { logical: 4,  rotate: 0,   col: 1, row: 2 },
+      { logical: 3,  rotate: 0,   col: 2, row: 2 },
+      { logical: 14, rotate: 0,   col: 3, row: 2 },
+      // Row 3 (Bottom row - normal orientation)
+      { logical: 16, rotate: 0,   col: 0, row: 3 },
+      { logical: 1,  rotate: 0,   col: 1, row: 3 },
+      { logical: 2,  rotate: 0,   col: 2, row: 3 },
+      { logical: 15, rotate: 0,   col: 3, row: 3 }
     ]
-  ]
+  }
 };
 
 function init() {
@@ -275,7 +272,6 @@ function bindEvents() {
   $("pageCount").onchange = e => {
     state.pageCount = parseInt(e.target.value, 10);
     state.assignments = Array(state.pageCount).fill(null);
-    state.currentSheet = 0;
     renderPageGrid();
     renderPreview();
   };
@@ -287,14 +283,6 @@ function bindEvents() {
   $("borderColor").oninput = e => { state.borderColor = e.target.value; renderPreview(); };
   $("pageBg").oninput = e => { state.pageBg = e.target.value; renderPreview(); };
   $("guides").onchange = e => { state.guides = e.target.value; renderPreview(); };
-
-  $("prevSheetBtn").onclick = () => {
-    if (state.currentSheet > 0) { state.currentSheet--; renderPreview(); }
-  };
-  $("nextSheetBtn").onclick = () => {
-    const maxSheets = sheetLayouts[state.pageCount].length;
-    if (state.currentSheet < maxSheets - 1) { state.currentSheet++; renderPreview(); }
-  };
 
   $("printBtn").onclick = () => window.print();
   $("pngBtn").onclick = exportPNG;
@@ -368,11 +356,6 @@ function renderPreview() {
   const wrap = $("previewWrap");
   container.innerHTML = "";
 
-  const maxSheets = sheetLayouts[state.pageCount].length;
-  if (state.currentSheet >= maxSheets) state.currentSheet = 0;
-
-  $("sheetIndicator").textContent = `Sheet ${state.currentSheet + 1} / ${maxSheets}`;
-
   const [mmW, mmH] = paperDimensionsMM[state.paper];
   const maxW = wrap.clientWidth - 40;
   const maxH = wrap.clientHeight - 40;
@@ -385,12 +368,11 @@ function renderPreview() {
   container.style.height = height + "px";
   container.style.setProperty('--page-bg', state.pageBg);
 
-  const colW = width / 4;
-  const rowH = height / 2;
+  const layout = oneSheetLayouts[state.pageCount];
+  const colW = width / layout.cols;
+  const rowH = height / layout.rows;
 
-  const currentLayout = sheetLayouts[state.pageCount][state.currentSheet];
-
-  currentLayout.forEach(slot => {
+  layout.slots.forEach(slot => {
     const pageDiv = document.createElement("div");
     pageDiv.className = `page ${slot.rotate === 180 ? 'flipped' : ''}`;
     
@@ -431,24 +413,21 @@ function renderPreview() {
   });
 
   if (state.guides === 'yes') {
-    for (let i = 1; i < 4; i++) {
+    // Vertical fold lines
+    for (let c = 1; c < layout.cols; c++) {
       const vFold = document.createElement("div");
       vFold.className = "foldline v";
-      vFold.style.left = (i * colW) + "px";
+      vFold.style.left = (c * colW) + "px";
       container.appendChild(vFold);
     }
 
-    const hFold = document.createElement("div");
-    hFold.className = "foldline h";
-    hFold.style.top = rowH + "px";
-    container.appendChild(hFold);
-
-    const cut = document.createElement("div");
-    cut.className = "cutline";
-    cut.style.left = colW + "px";
-    cut.style.width = (colW * 2) + "px";
-    cut.style.top = rowH + "px";
-    container.appendChild(cut);
+    // Horizontal fold lines
+    for (let r = 1; r < layout.rows; r++) {
+      const hFold = document.createElement("div");
+      hFold.className = "foldline h";
+      hFold.style.top = (r * rowH) + "px";
+      container.appendChild(hFold);
+    }
   }
 }
 
@@ -465,12 +444,11 @@ function exportPNG() {
   ctx.fillStyle = state.pageBg;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const colW = canvas.width / 4;
-  const rowH = canvas.height / 2;
+  const layout = oneSheetLayouts[state.pageCount];
+  const colW = canvas.width / layout.cols;
+  const rowH = canvas.height / layout.rows;
 
-  const currentLayout = sheetLayouts[state.pageCount][state.currentSheet];
-
-  currentLayout.forEach(slot => {
+  layout.slots.forEach(slot => {
     const x = slot.col * colW;
     const y = slot.row * rowH;
 
@@ -518,7 +496,7 @@ function exportPNG() {
   canvas.toBlob(blob => {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `zine-sheet-${state.currentSheet + 1}-of-${sheetLayouts[state.pageCount].length}.png`;
+    a.download = `zine-${state.pageCount}pages-onesheet.png`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }, "image/png");
@@ -526,8 +504,8 @@ function exportPNG() {
 
 function exportJSON() {
   const data = {
-    app: "Local Zine Imposer Studio",
-    version: 3,
+    app: "Local Zine Imposer",
+    version: 4,
     state: {
       pageCount: state.pageCount,
       paper: state.paper,
@@ -542,7 +520,7 @@ function exportJSON() {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "zine-project.json";
+  a.download = "zine-one-sheet.json";
   a.click();
 }
 
@@ -564,7 +542,7 @@ async function importJSONFile(file) {
       renderPreview();
     }
   } catch (err) {
-    alert("Failed to load project configuration.");
+    alert("Could not import settings.");
   }
 }
 
