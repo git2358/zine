@@ -6,31 +6,29 @@
 <title>Local Zine Imposer Studio</title>
 <style>
 :root {
-  --bg: #121214; --panel: #1e1e22; --panel2: #28282e; --line: #383842;
-  --text: #f0f0f5; --muted: #9a9ab0; --accent: #4f80ff; --accent-hover: #6692ff;
+  --bg: #171717; --panel: #222222; --panel2: #2b2b2b; --line: #444444;
+  --text: #f4f4f4; --muted: #aaaaaa; --accent: #4f80ff; --accent-hover: #6692ff;
   --danger: #e5484d; --paper: #ffffff; --ink: #111111;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 body { min-height: 100vh; }
 button, input, select { font: inherit; }
-button { border: 1px solid var(--line); background: var(--panel2); color: #fff; border-radius: 8px; padding: 8px 12px; cursor: pointer; transition: all 0.15s ease; }
-button:hover { background: #33333d; border-color: #555566; }
+button { border: 1px solid #555; background: #333; color: #fff; border-radius: 8px; padding: 8px 12px; cursor: pointer; transition: all 0.15s ease; }
+button:hover { background: #3d3d3d; border-color: #666; }
 button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 button.primary:hover { background: var(--accent-hover); }
-button.danger { background: rgba(229, 72, 77, 0.15); border-color: var(--danger); color: var(--danger); }
+button.danger { background: rgba(229, 72, 77, 0.2); border-color: var(--danger); color: var(--danger); }
 button.danger:hover { background: var(--danger); color: #fff; }
 button.small { padding: 5px 8px; font-size: 0.8rem; }
 .app { display: grid; grid-template-columns: minmax(0, 1fr) 380px; min-height: 100vh; }
-.preview-area { min-width: 0; display: flex; flex-direction: column; background: #0b0b0c; }
-.topbar { display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 5; }
-.topbar h1 { font-size: 1.1rem; margin: 0; font-weight: 600; white-space: nowrap; }
+.preview-area { min-width: 0; display: flex; flex-direction: column; background: #0c0c0e; }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 5; }
+.topbar h1 { font-size: 1rem; margin: 0; font-weight: 600; white-space: nowrap; }
 .topbar .spacer { flex: 1; }
-.view-modes { display: flex; background: var(--bg); padding: 3px; border-radius: 8px; border: 1px solid var(--line); }
-.view-modes button { border: none; background: transparent; border-radius: 6px; padding: 5px 10px; font-size: 0.85rem; }
-.view-modes button.active { background: var(--panel2); color: var(--accent); font-weight: 600; }
-.preview-wrap { padding: 30px; overflow: auto; flex: 1; display: flex; justify-content: center; align-items: center; }
-#paperPreview { position: relative; background: var(--paper); box-shadow: 0 12px 40px rgba(0,0,0,0.6); overflow: hidden; transition: transform 0.2s ease; }
+.sheet-nav { display: flex; align-items: center; gap: 8px; background: #111; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line); font-size: 0.85rem; }
+.preview-wrap { padding: 20px; overflow: auto; flex: 1; display: flex; justify-content: center; align-items: center; }
+#paperPreview { position: relative; background: var(--paper); box-shadow: 0 12px 40px rgba(0,0,0,0.6); overflow: hidden; }
 .page { position: absolute; overflow: hidden; background: var(--page-bg, #fff); box-sizing: border-box; }
 .page.flipped { transform: rotate(180deg); }
 .page img { width: 100%; height: 100%; display: block; }
@@ -42,36 +40,34 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
 .foldline { position: absolute; z-index: 3; pointer-events: none; }
 .foldline.v { top: 0; bottom: 0; border-left: 1px dashed #999; }
 .foldline.h { left: 0; right: 0; border-top: 1px dashed #999; }
-.cutline { position: absolute; z-index: 4; pointer-events: none; border-top: 2px solid #e5484d; }
+.cutline { position: absolute; z-index: 4; pointer-events: none; border-top: 2px dashed #e5484d; }
 
 .sidebar { background: var(--panel); border-left: 1px solid var(--line); overflow-y: auto; }
 .section { padding: 16px; border-bottom: 1px solid var(--line); }
-.section h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 0 0 12px; }
+.section h2 { font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 0 0 12px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .field { margin-bottom: 10px; }
 .field label { display: block; color: var(--muted); font-size: 0.78rem; margin-bottom: 5px; }
-.field input[type=text], .field input[type=number], .field select { width: 100%; background: var(--bg); color: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; }
-.field input[type=color] { width: 100%; height: 34px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 2px; cursor: pointer; }
-.drop { border: 2px dashed var(--line); border-radius: 10px; padding: 20px; text-align: center; color: var(--muted); background: rgba(0,0,0,0.15); transition: all 0.2s; }
+.field input[type=text], .field input[type=number], .field select { width: 100%; background: #151515; color: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; }
+.field input[type=color] { width: 100%; height: 34px; background: #151515; border: 1px solid var(--line); border-radius: 6px; padding: 2px; cursor: pointer; }
+.drop { border: 2px dashed #555; border-radius: 10px; padding: 16px; text-align: center; color: var(--muted); background: rgba(0,0,0,0.15); }
 .drop.drag { border-color: var(--accent); background: rgba(79, 128, 255, 0.1); }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .page-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 380px; overflow-y: auto; padding-right: 4px; }
-.page-card { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; position: relative; }
-.page-card.drag-over { border-color: var(--accent); background: rgba(79, 128, 255, 0.05); }
+.page-card { background: #181818; border: 1px solid var(--line); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
 .page-card .header { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; font-weight: 600; color: var(--muted); }
-.page-card .thumb-box { height: 75px; background: #000; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; border: 1px solid #333; }
+.page-card .thumb-box { height: 70px; background: #000; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid #333; }
 .page-card .thumb-box img { width: 100%; height: 100%; object-fit: cover; }
-.page-card select { font-size: 0.75rem; padding: 4px; }
+.page-card select { font-size: 0.75rem; padding: 4px; width: 100%; background: #111; color: #fff; border: 1px solid #444; border-radius: 4px; }
 
-.check { display: flex; gap: 8px; align-items: center; font-size: 0.82rem; margin: 8px 0; cursor: pointer; }
 .help { font-size: 0.75rem; color: var(--muted); line-height: 1.4; margin-top: 4px; }
 .status { font-size: 0.78rem; color: var(--muted); }
 
 @media(max-width: 900px) {
   .app { grid-template-columns: 1fr; }
   .sidebar { border-left: 0; border-top: 1px solid var(--line); }
-  .preview-wrap { min-height: 450px; padding: 16px; }
+  .preview-wrap { min-height: 420px; padding: 12px; }
 }
 </style>
 </head>
@@ -80,14 +76,15 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
   <main class="preview-area">
     <div class="topbar">
       <h1>Zine Studio</h1>
-      <div class="view-modes">
-        <button id="viewSheet" class="active">Sheet View</button>
-        <button id="viewReader">Reader Spreads</button>
+      <div class="sheet-nav">
+        <button id="prevSheetBtn" class="small">&lt;</button>
+        <span id="sheetIndicator">Sheet 1 / 1</span>
+        <button id="nextSheetBtn" class="small">&gt;</button>
       </div>
       <div class="spacer"></div>
       <button id="printBtn" class="primary">Print / PDF</button>
     </div>
-    <div class="preview-wrap">
+    <div id="previewWrap" class="preview-wrap">
       <div id="paperPreview"></div>
     </div>
   </main>
@@ -102,30 +99,30 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
       <input id="fileInput" type="file" accept="image/*" multiple hidden>
       <div class="actions" style="margin-top:10px">
         <button id="clearPhotos" class="small danger">Clear All</button>
-        <button id="autoAssign" class="small">Auto-Assign</button>
+        <button id="autoAssign" class="small">Auto Fill</button>
       </div>
     </div>
 
     <div class="section">
-      <h2>2. Paper & Layout</h2>
+      <h2>2. Zine & Paper Setup</h2>
       <div class="grid2">
+        <div class="field">
+          <label>Pages</label>
+          <select id="pageCount"><option value="8">8 Pages (1 Sheet)</option><option value="16">16 Pages (2 Sheets)</option></select>
+        </div>
         <div class="field">
           <label>Paper Size</label>
           <select id="paper"><option value="A4">A4</option><option value="A3">A3</option><option value="US Letter">US Letter</option></select>
         </div>
-        <div class="field">
-          <label>Fit Mode</label>
-          <select id="objectFit"><option value="cover">Cover (Crop)</option><option value="contain">Contain (Fit)</option></select>
-        </div>
       </div>
       <div class="grid2">
         <div class="field">
-          <label>Outer Margin (mm)</label>
-          <input id="margin" type="number" min="0" max="30" step="0.5" value="5">
+          <label>Image Fit</label>
+          <select id="objectFit"><option value="cover">Cover (Fill & Crop)</option><option value="contain">Contain (Fit Whole)</option></select>
         </div>
         <div class="field">
-          <label>Page Gap (mm)</label>
-          <input id="gap" type="number" min="0" max="10" step="0.5" value="0">
+          <label>Outer Margin (mm)</label>
+          <input id="margin" type="number" min="0" max="30" step="0.5" value="4">
         </div>
       </div>
     </div>
@@ -148,27 +145,27 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
           <input id="pageBg" type="color" value="#ffffff">
         </div>
         <div class="field">
-          <label>Guides</label>
-          <select id="guides"><option value="yes">Show Cuts & Folds</option><option value="no">Hide Guides</option></select>
+          <label>Fold & Cut Guides</label>
+          <select id="guides"><option value="yes">Show Guides</option><option value="no">Hide Guides</option></select>
         </div>
       </div>
     </div>
 
     <div class="section">
-      <h2>4. Page Imposition</h2>
-      <div class="help" style="margin-bottom:10px">Assign uploaded photos to logical reader pages. Top row auto-rotates for single-sheet folding.</div>
+      <h2>4. Logical Page Imposition</h2>
+      <div class="help" style="margin-bottom:10px">Assign uploaded photos to reader page numbers. Imposition and upside-down rotations are generated automatically for folding.</div>
       <div id="pageGrid" class="page-grid"></div>
     </div>
 
     <div class="section">
-      <h2>5. Export Project</h2>
+      <h2>5. Export</h2>
       <div class="actions">
-        <button id="pngBtn" class="primary">Export High-Res PNG</button>
+        <button id="pngBtn" class="primary">Export PNG (Current Sheet)</button>
         <button id="jsonOut">Save Project</button>
         <button id="jsonIn">Load Project</button>
         <input id="jsonInput" type="file" accept=".json" hidden>
       </div>
-      <div id="status" class="status" style="margin-top:10px">Client-side rendering engine active.</div>
+      <div id="status" class="status" style="margin-top:10px">Local rendering ready.</div>
     </div>
   </aside>
 </div>
@@ -179,13 +176,13 @@ button.small { padding: 5px 8px; font-size: 0.8rem; }
 const $ = id => document.getElementById(id);
 
 const state = {
-  photos: [], 
-  assignments: Array(8).fill(null), // Logical pages 1..8
-  viewMode: 'sheet', // 'sheet' | 'reader'
+  photos: [],
+  pageCount: 8,
+  currentSheet: 0, // 0-indexed sheet pointer
+  assignments: Array(8).fill(null),
   paper: 'A4',
   objectFit: 'cover',
-  margin: 5,
-  gap: 0,
+  margin: 4,
   borderWidth: 0.3,
   borderColor: '#222222',
   pageBg: '#ffffff',
@@ -193,25 +190,52 @@ const state = {
 };
 
 const paperDimensionsMM = {
-  "A4": [297, 210], // Landscape dimensions
+  "A4": [297, 210],
   "A3": [420, 297],
   "US Letter": [279.4, 215.9]
 };
 
-// 8-page mini-zine imposition mapping
-// Standard 8-page mini zine: 2 rows x 4 columns on a single landscape sheet
-// Row 1 (Top, upside down): [ Logical 5, Logical 4, Logical 3, Logical 6 ]
-// Row 2 (Bottom, right side up): [ Logical 8 (Back), Logical 1 (Front), Logical 2, Logical 7 ]
-const zineSheetLayout = [
-  { logical: 5, rotate: 180, col: 0, row: 0 },
-  { logical: 4, rotate: 180, col: 1, row: 0 },
-  { logical: 3, rotate: 180, col: 2, row: 0 },
-  { logical: 6, rotate: 180, col: 3, row: 0 },
-  { logical: 8, rotate: 0,   col: 0, row: 1 },
-  { logical: 1, rotate: 0,   col: 1, row: 1 },
-  { logical: 2, rotate: 0,   col: 2, row: 1 },
-  { logical: 7, rotate: 0,   col: 3, row: 1 }
-];
+/* Imposition schemes (8-page mini-zine layout per sheet: 2 rows x 4 cols)
+   Row 0 is rotated 180deg for 1-sheet mini zine folding. */
+const sheetLayouts = {
+  8: [
+    // Sheet 1 (Side A / Main 8-page Zine)
+    [
+      { logical: 5, rotate: 180, col: 0, row: 0 },
+      { logical: 4, rotate: 180, col: 1, row: 0 },
+      { logical: 3, rotate: 180, col: 2, row: 0 },
+      { logical: 6, rotate: 180, col: 3, row: 0 },
+      { logical: 8, rotate: 0,   col: 0, row: 1 },
+      { logical: 1, rotate: 0,   col: 1, row: 1 },
+      { logical: 2, rotate: 0,   col: 2, row: 1 },
+      { logical: 7, rotate: 0,   col: 3, row: 1 }
+    ]
+  ],
+  16: [
+    // Sheet 1 (Pages 1-8 logic)
+    [
+      { logical: 5, rotate: 180, col: 0, row: 0 },
+      { logical: 4, rotate: 180, col: 1, row: 0 },
+      { logical: 3, rotate: 180, col: 2, row: 0 },
+      { logical: 6, rotate: 180, col: 3, row: 0 },
+      { logical: 16, rotate: 0,  col: 0, row: 1 },
+      { logical: 1, rotate: 0,   col: 1, row: 1 },
+      { logical: 2, rotate: 0,   col: 2, row: 1 },
+      { logical: 15, rotate: 0,  col: 3, row: 1 }
+    ],
+    // Sheet 2 (Pages 9-16 logic)
+    [
+      { logical: 13, rotate: 180, col: 0, row: 0 },
+      { logical: 12, rotate: 180, col: 1, row: 0 },
+      { logical: 11, rotate: 180, col: 2, row: 0 },
+      { logical: 14, rotate: 180, col: 3, row: 0 },
+      { logical: 8, rotate: 0,    col: 0, row: 1 },
+      { logical: 9, rotate: 0,    col: 1, row: 1 },
+      { logical: 10, rotate: 0,   col: 2, row: 1 },
+      { logical: 7, rotate: 0,    col: 3, row: 1 }
+    ]
+  ]
+};
 
 function init() {
   bindEvents();
@@ -242,8 +266,16 @@ function bindEvents() {
 
   $("autoAssign").onclick = () => {
     state.photos.forEach((ph, i) => {
-      if (i < 8) state.assignments[i] = ph.id;
+      if (i < state.pageCount) state.assignments[i] = ph.id;
     });
+    renderPageGrid();
+    renderPreview();
+  };
+
+  $("pageCount").onchange = e => {
+    state.pageCount = parseInt(e.target.value, 10);
+    state.assignments = Array(state.pageCount).fill(null);
+    state.currentSheet = 0;
     renderPageGrid();
     renderPreview();
   };
@@ -251,29 +283,26 @@ function bindEvents() {
   $("paper").onchange = e => { state.paper = e.target.value; renderPreview(); };
   $("objectFit").onchange = e => { state.objectFit = e.target.value; renderPreview(); };
   $("margin").oninput = e => { state.margin = +e.target.value || 0; renderPreview(); };
-  $("gap").oninput = e => { state.gap = +e.target.value || 0; renderPreview(); };
   $("borderWidth").oninput = e => { state.borderWidth = +e.target.value || 0; renderPreview(); };
   $("borderColor").oninput = e => { state.borderColor = e.target.value; renderPreview(); };
   $("pageBg").oninput = e => { state.pageBg = e.target.value; renderPreview(); };
   $("guides").onchange = e => { state.guides = e.target.value; renderPreview(); };
 
-  $("viewSheet").onclick = () => setViewMode('sheet');
-  $("viewReader").onclick = () => setViewMode('reader');
+  $("prevSheetBtn").onclick = () => {
+    if (state.currentSheet > 0) { state.currentSheet--; renderPreview(); }
+  };
+  $("nextSheetBtn").onclick = () => {
+    const maxSheets = sheetLayouts[state.pageCount].length;
+    if (state.currentSheet < maxSheets - 1) { state.currentSheet++; renderPreview(); }
+  };
 
   $("printBtn").onclick = () => window.print();
-  $("pngBtn").onclick = exportHighResPNG;
+  $("pngBtn").onclick = exportPNG;
   $("jsonOut").onclick = exportJSON;
   $("jsonIn").onclick = () => $("jsonInput").click();
   $("jsonInput").onchange = e => importJSONFile(e.target.files[0]);
 
   window.addEventListener("resize", renderPreview);
-}
-
-function setViewMode(mode) {
-  state.viewMode = mode;
-  $("viewSheet").classList.toggle("active", mode === 'sheet');
-  $("viewReader").classList.toggle("active", mode === 'reader');
-  renderPreview();
 }
 
 async function handleFiles(files) {
@@ -284,10 +313,9 @@ async function handleFiles(files) {
     img.src = url;
     await new Promise(r => { img.onload = r; });
     
-    const photoObj = { id: crypto.randomUUID(), name: f.name, url, img };
+    const photoObj = { id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()), name: f.name, url, img };
     state.photos.push(photoObj);
 
-    // Auto-fill first empty assignment slot
     const emptyIdx = state.assignments.findIndex(x => x === null);
     if (emptyIdx !== -1) state.assignments[emptyIdx] = photoObj.id;
   }
@@ -299,7 +327,7 @@ function renderPageGrid() {
   const container = $("pageGrid");
   container.innerHTML = "";
 
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < state.pageCount; i++) {
     const logicalNum = i + 1;
     const card = document.createElement("div");
     card.className = "page-card";
@@ -307,15 +335,19 @@ function renderPageGrid() {
     const assignedId = state.assignments[i];
     const photo = state.photos.find(p => p.id === assignedId);
 
+    let tag = '';
+    if (logicalNum === 1) tag = ' (Cover)';
+    else if (logicalNum === state.pageCount) tag = ' (Back)';
+
     card.innerHTML = `
       <div class="header">
-        <span>Page ${logicalNum} ${logicalNum === 1 ? '(Cover)' : logicalNum === 8 ? '(Back)' : ''}</span>
+        <span>Page ${logicalNum}${tag}</span>
       </div>
       <div class="thumb-box">
         ${photo ? `<img src="${photo.url}">` : `<span style="font-size:10px;color:#666">Empty</span>`}
       </div>
       <select class="photo-select">
-        <option value="">-- Blank Page --</option>
+        <option value="">-- Blank --</option>
         ${state.photos.map(p => `<option value="${p.id}" ${p.id === assignedId ? 'selected' : ''}>${escapeHtml(p.name)}</option>`).join('')}
       </select>
     `;
@@ -332,20 +364,20 @@ function renderPageGrid() {
 }
 
 function renderPreview() {
-  const preview = $("paperPreview");
-  preview.innerHTML = "";
+  const container = $("paperPreview");
+  const wrap = $("previewWrap");
+  container.innerHTML = "";
 
-  if (state.viewMode === 'sheet') {
-    renderSheetPreview(preview);
-  } else {
-    renderReaderPreview(preview);
-  }
-}
+  const maxSheets = sheetLayouts[state.pageCount].length;
+  if (state.currentSheet >= maxSheets) state.currentSheet = 0;
 
-function renderSheetPreview(container) {
+  $("sheetIndicator").textContent = `Sheet ${state.currentSheet + 1} / ${maxSheets}`;
+
   const [mmW, mmH] = paperDimensionsMM[state.paper];
-  const scale = Math.min(($("preview-wrap").clientWidth - 60) / mmW, ($("preview-wrap").clientHeight - 60) / mmH, 2.5);
-  
+  const maxW = wrap.clientWidth - 40;
+  const maxH = wrap.clientHeight - 40;
+
+  const scale = Math.min(maxW / mmW, maxH / mmH, 2.2);
   const width = mmW * scale;
   const height = mmH * scale;
 
@@ -356,17 +388,17 @@ function renderSheetPreview(container) {
   const colW = width / 4;
   const rowH = height / 2;
 
-  zineSheetLayout.forEach(slot => {
+  const currentLayout = sheetLayouts[state.pageCount][state.currentSheet];
+
+  currentLayout.forEach(slot => {
     const pageDiv = document.createElement("div");
     pageDiv.className = `page ${slot.rotate === 180 ? 'flipped' : ''}`;
     
-    const marginPx = (state.margin / mmW) * width;
-    const gapPx = (state.gap / mmW) * width;
-
-    pageDiv.style.left = (slot.col * colW + gapPx / 2) + "px";
-    pageDiv.style.top = (slot.row * rowH + gapPx / 2) + "px";
-    pageDiv.style.width = (colW - gapPx) + "px";
-    pageDiv.style.height = (rowH - gapPx) + "px";
+    pageDiv.style.left = (slot.col * colW) + "px";
+    pageDiv.style.top = (slot.row * rowH) + "px";
+    pageDiv.style.width = colW + "px";
+    pageDiv.style.height = rowH + "px";
+    pageDiv.style.padding = (state.margin / mmW * width) + "px";
 
     const assignedId = state.assignments[slot.logical - 1];
     const photo = state.photos.find(p => p.id === assignedId);
@@ -379,7 +411,7 @@ function renderSheetPreview(container) {
     } else {
       const empty = document.createElement("div");
       empty.className = "empty";
-      empty.innerHTML = `<div>P${slot.logical}</div>`;
+      empty.innerHTML = `<div>Page ${slot.logical}</div>`;
       pageDiv.appendChild(empty);
     }
 
@@ -388,29 +420,29 @@ function renderSheetPreview(container) {
     label.textContent = `P${slot.logical}`;
     pageDiv.appendChild(label);
 
-    const border = document.createElement("div");
-    border.className = "border-overlay";
-    border.style.border = `${state.borderWidth * scale}px solid ${state.borderColor}`;
-    pageDiv.appendChild(border);
+    if (state.borderWidth > 0) {
+      const border = document.createElement("div");
+      border.className = "border-overlay";
+      border.style.border = `${state.borderWidth * scale}px solid ${state.borderColor}`;
+      pageDiv.appendChild(border);
+    }
 
     container.appendChild(pageDiv);
   });
 
   if (state.guides === 'yes') {
-    // Vertical folds
     for (let i = 1; i < 4; i++) {
       const vFold = document.createElement("div");
       vFold.className = "foldline v";
       vFold.style.left = (i * colW) + "px";
       container.appendChild(vFold);
     }
-    // Horizontal fold
+
     const hFold = document.createElement("div");
     hFold.className = "foldline h";
     hFold.style.top = rowH + "px";
     container.appendChild(hFold);
 
-    // Center Slit Cut line (between middle columns)
     const cut = document.createElement("div");
     cut.className = "cutline";
     cut.style.left = colW + "px";
@@ -420,21 +452,9 @@ function renderSheetPreview(container) {
   }
 }
 
-function renderReaderPreview(container) {
-  // Simple reader view displaying pages sequentially side by side
-  container.style.width = "600px";
-  container.style.height = "400px";
-  container.style.background = "#1a1a1e";
-  container.style.display = "flex";
-  container.style.alignItems = "center";
-  container.style.justifyContent = "center";
-  container.style.color = "#aaa";
-  container.innerHTML = `<div style="text-align:center"><h3>Reader Spread Preview</h3><p>Page 8 (Back) | Page 1 (Cover)</p></div>`;
-}
-
-function renderCanvas(scaleFactor = 1) {
+function exportPNG() {
   const [mmW, mmH] = paperDimensionsMM[state.paper];
-  const dpi = 300 * scaleFactor;
+  const dpi = 300;
   const mmToPx = dpi / 25.4;
 
   const canvas = document.createElement("canvas");
@@ -448,19 +468,22 @@ function renderCanvas(scaleFactor = 1) {
   const colW = canvas.width / 4;
   const rowH = canvas.height / 2;
 
-  zineSheetLayout.forEach(slot => {
+  const currentLayout = sheetLayouts[state.pageCount][state.currentSheet];
+
+  currentLayout.forEach(slot => {
     const x = slot.col * colW;
     const y = slot.row * rowH;
 
     const assignedId = state.assignments[slot.logical - 1];
     const photo = state.photos.find(p => p.id === assignedId);
 
+    const marginPx = state.margin * mmToPx;
+    const drawW = colW - (marginPx * 2);
+    const drawH = rowH - (marginPx * 2);
+
     ctx.save();
     ctx.translate(x + colW / 2, y + rowH / 2);
     if (slot.rotate) ctx.rotate((slot.rotate * Math.PI) / 180);
-
-    const drawW = colW - (state.gap * mmToPx);
-    const drawH = rowH - (state.gap * mmToPx);
 
     if (photo) {
       const img = photo.img;
@@ -492,15 +515,10 @@ function renderCanvas(scaleFactor = 1) {
     ctx.restore();
   });
 
-  return canvas;
-}
-
-function exportHighResPNG() {
-  const canvas = renderCanvas(1);
   canvas.toBlob(blob => {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `zine-imposition-${state.paper}.png`;
+    a.download = `zine-sheet-${state.currentSheet + 1}-of-${sheetLayouts[state.pageCount].length}.png`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }, "image/png");
@@ -508,13 +526,13 @@ function exportHighResPNG() {
 
 function exportJSON() {
   const data = {
-    app: "Zine Studio",
-    version: 2,
+    app: "Local Zine Imposer Studio",
+    version: 3,
     state: {
+      pageCount: state.pageCount,
       paper: state.paper,
       objectFit: state.objectFit,
       margin: state.margin,
-      gap: state.gap,
       borderWidth: state.borderWidth,
       borderColor: state.borderColor,
       pageBg: state.pageBg,
@@ -524,7 +542,7 @@ function exportJSON() {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "zine-config.json";
+  a.download = "zine-project.json";
   a.click();
 }
 
@@ -535,11 +553,18 @@ async function importJSONFile(file) {
     const parsed = JSON.parse(content);
     if (parsed.state) {
       Object.assign(state, parsed.state);
+      $("pageCount").value = state.pageCount;
+      $("paper").value = state.paper;
+      $("objectFit").value = state.objectFit;
+      $("margin").value = state.margin;
+      $("borderWidth").value = state.borderWidth;
+      $("borderColor").value = state.borderColor;
+      $("pageBg").value = state.pageBg;
       renderPageGrid();
       renderPreview();
     }
   } catch (err) {
-    alert("Failed to load project config.");
+    alert("Failed to load project configuration.");
   }
 }
 
@@ -549,5 +574,14 @@ function escapeHtml(str) {
 
 window.onload = init;
 </script>
+<style>
+@media print {
+  body { background: #fff; }
+  .sidebar, .topbar { display: none !important; }
+  .app { display: block; }
+  .preview-wrap { padding: 0; display: block; }
+  #paperPreview { box-shadow: none !important; margin: 0; width: 100vw !important; height: 100vh !important; }
+}
+</style>
 </body>
 </html>
