@@ -218,22 +218,29 @@ const oneSheetLayouts = {
   16: {
     cols: 4, rows: 4,
     slots: [
-      { logical: 9,  rotate: 180, col: 0, row: 0 },
-      { logical: 8,  rotate: 180, col: 1, row: 0 },
-      { logical: 7,  rotate: 180, col: 2, row: 0 },
-      { logical: 10, rotate: 180, col: 3, row: 0 },
-      { logical: 12, rotate: 180, col: 0, row: 1 },
-      { logical: 5,  rotate: 180, col: 1, row: 1 },
-      { logical: 6,  rotate: 180, col: 2, row: 1 },
-      { logical: 11, rotate: 180, col: 3, row: 1 },
-      { logical: 13, rotate: 0,   col: 0, row: 2 },
-      { logical: 4,  rotate: 0,   col: 1, row: 2 },
-      { logical: 3,  rotate: 0,   col: 2, row: 2 },
-      { logical: 14, rotate: 0,   col: 3, row: 2 },
-      { logical: 16, rotate: 0,   col: 0, row: 3 },
-      { logical: 1,  rotate: 0,   col: 1, row: 3 },
-      { logical: 2,  rotate: 0,   col: 2, row: 3 },
-      { logical: 15, rotate: 0,   col: 3, row: 3 }
+      // Row 1: Pages 14, 13, 12, 11 (Upside Down)
+      { logical: 14, rotate: 180, col: 0, row: 0 },
+      { logical: 13, rotate: 180, col: 1, row: 0 },
+      { logical: 12, rotate: 180, col: 2, row: 0 },
+      { logical: 11, rotate: 180, col: 3, row: 0 },
+
+      // Row 2: Pages 7, 8, 9, 10 (Right Side Up)
+      { logical: 7,  rotate: 0,   col: 0, row: 1 },
+      { logical: 8,  rotate: 0,   col: 1, row: 1 },
+      { logical: 9,  rotate: 0,   col: 2, row: 1 },
+      { logical: 10, rotate: 0,   col: 3, row: 1 },
+
+      // Row 3: Pages 6, 5, 4, 3 (Upside Down)
+      { logical: 6,  rotate: 180, col: 0, row: 2 },
+      { logical: 5,  rotate: 180, col: 1, row: 2 },
+      { logical: 4,  rotate: 180, col: 2, row: 2 },
+      { logical: 3,  rotate: 180, col: 3, row: 2 },
+
+      // Row 4: Back Cover (16), Front Cover (1), Page 1 (2), Page 2 (15) (Right Side Up)
+      { logical: 16, rotate: 0,   col: 0, row: 3, customLabel: 'Back Cover' },
+      { logical: 1,  rotate: 0,   col: 1, row: 3, customLabel: 'Front Cover' },
+      { logical: 2,  rotate: 0,   col: 2, row: 3, customLabel: 'Page 1' },
+      { logical: 15, rotate: 0,   col: 3, row: 3, customLabel: 'Page 2' }
     ]
   }
 };
@@ -332,8 +339,8 @@ function renderPageGrid() {
     const effectiveFit = meta.fit === 'global' ? state.objectFit : meta.fit;
 
     let tag = '';
-    if (logicalNum === 1) tag = ' (Cover)';
-    else if (logicalNum === state.pageCount) tag = ' (Back)';
+    if (logicalNum === 1) tag = ' (Front Cover)';
+    else if (logicalNum === state.pageCount) tag = ' (Back Cover)';
 
     card.innerHTML = `
       <div class="header">
@@ -432,13 +439,14 @@ function renderPreview() {
     } else {
       const empty = document.createElement("div");
       empty.className = "empty";
-      empty.innerHTML = `<div>Page ${slot.logical}</div>`;
+      const lblText = slot.customLabel || `Page ${slot.logical}`;
+      empty.innerHTML = `<div>${lblText}</div>`;
       pageDiv.appendChild(empty);
     }
 
     const label = document.createElement("div");
     label.className = "label";
-    label.textContent = `P${slot.logical}`;
+    label.textContent = slot.customLabel ? slot.customLabel : `P${slot.logical}`;
     pageDiv.appendChild(label);
 
     if (state.borderWidth > 0) {
@@ -556,7 +564,7 @@ function exportPNG() {
 function exportJSON() {
   const data = {
     app: "One-Sheet Zine Studio",
-    version: 5,
+    version: 6,
     state: {
       pageCount: state.pageCount,
       sheetOrientation: state.sheetOrientation,
