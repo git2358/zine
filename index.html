@@ -38,9 +38,13 @@ button.small { padding: 4px 8px; font-size: 0.78rem; }
 .page .empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-size: 11px; text-align: center; padding: 4px; border: 1px dashed #ccc; margin: 2px; }
 .page .border-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
 .page .label { position: absolute; left: 3px; top: 3px; font-size: 9px; font-weight: 700; color: #333; background: rgba(255,255,255,0.85); padding: 1px 3px; border-radius: 3px; z-index: 5; border: 1px solid #ddd; }
+.diagonal-cross { position: absolute; inset: 0; pointer-events: none; z-index: 3; opacity: 0.35; }
+.diagonal-cross svg { width: 100%; height: 100%; }
+
 .foldline { position: absolute; z-index: 6; pointer-events: none; }
-.foldline.v { top: 0; bottom: 0; border-left: 1px dashed #999; }
-.foldline.h { left: 0; right: 0; border-top: 1px dashed #999; }
+.foldline.v { top: 0; bottom: 0; border-left: 1px dashed #4f80ff; }
+.foldline.h { left: 0; right: 0; border-top: 1px dashed #4f80ff; }
+.foldline.spine { border-color: #e5484d; border-style: solid; opacity: 0.7; }
 
 .sidebar { background: var(--panel); border-left: 1px solid var(--line); overflow-y: auto; }
 .section { padding: 16px; border-bottom: 1px solid var(--line); }
@@ -126,9 +130,15 @@ button.small { padding: 4px 8px; font-size: 0.78rem; }
           <select id="objectFit"><option value="cover">Crop / Fill (Cover)</option><option value="contain">Fit Whole (Contain)</option><option value="fill">Stretch to Fill</option></select>
         </div>
       </div>
-      <div class="field">
-        <label>Outer Margin (mm)</label>
-        <input id="margin" type="number" min="0" max="30" step="0.5" value="4">
+      <div class="grid2">
+        <div class="field">
+          <label>Outer Margin (mm)</label>
+          <input id="margin" type="number" min="0" max="30" step="0.5" value="4">
+        </div>
+        <div class="field">
+          <label>Spine Gap (mm)</label>
+          <input id="spineGap" type="number" min="0" max="25" step="0.5" value="5">
+        </div>
       </div>
     </div>
 
@@ -150,7 +160,7 @@ button.small { padding: 4px 8px; font-size: 0.78rem; }
           <input id="pageBg" type="color" value="#ffffff">
         </div>
         <div class="field">
-          <label>Fold Guides</label>
+          <label>Fold & Cross Guides</label>
           <select id="guides"><option value="yes">Show Guides</option><option value="no">Hide Guides</option></select>
         </div>
       </div>
@@ -189,6 +199,7 @@ const state = {
   paper: 'A4',
   objectFit: 'cover',
   margin: 4,
+  spineGap: 5,
   borderWidth: 0.3,
   borderColor: '#ffffff',
   pageBg: '#ffffff',
@@ -218,29 +229,25 @@ const oneSheetLayouts = {
   16: {
     cols: 4, rows: 4,
     slots: [
-      // Row 1: Pages 14, 13, 12, 11 (Upside Down)
       { logical: 14, rotate: 180, col: 0, row: 0 },
       { logical: 13, rotate: 180, col: 1, row: 0 },
       { logical: 12, rotate: 180, col: 2, row: 0 },
       { logical: 11, rotate: 180, col: 3, row: 0 },
 
-      // Row 2: Pages 7, 8, 9, 10 (Right Side Up)
       { logical: 7,  rotate: 0,   col: 0, row: 1 },
       { logical: 8,  rotate: 0,   col: 1, row: 1 },
       { logical: 9,  rotate: 0,   col: 2, row: 1 },
       { logical: 10, rotate: 0,   col: 3, row: 1 },
 
-      // Row 3: Pages 6, 5, 4, 3 (Upside Down)
       { logical: 6,  rotate: 180, col: 0, row: 2 },
       { logical: 5,  rotate: 180, col: 1, row: 2 },
       { logical: 4,  rotate: 180, col: 2, row: 2 },
       { logical: 3,  rotate: 180, col: 3, row: 2 },
 
-      // Row 4: Back Cover (16), Front Cover (1), Page 1 (2), Page 2 (15) (Right Side Up)
-      { logical: 16, rotate: 0,   col: 0, row: 3, customLabel: 'Back Cover' },
-      { logical: 1,  rotate: 0,   col: 1, row: 3, customLabel: 'Front Cover' },
-      { logical: 2,  rotate: 0,   col: 2, row: 3, customLabel: 'Page 1' },
-      { logical: 15, rotate: 0,   col: 3, row: 3, customLabel: 'Page 2' }
+      { logical: 16, rotate: 0,   col: 0, row: 3, customLabel: 'BACK COVER' },
+      { logical: 1,  rotate: 0,   col: 1, row: 3, customLabel: 'FRONT COVER' },
+      { logical: 2,  rotate: 0,   col: 2, row: 3, customLabel: '1' },
+      { logical: 15, rotate: 0,   col: 3, row: 3, customLabel: '2' }
     ]
   }
 };
@@ -292,6 +299,7 @@ function bindEvents() {
   $("paper").onchange = e => { state.paper = e.target.value; renderPreview(); };
   $("objectFit").onchange = e => { state.objectFit = e.target.value; renderPreview(); };
   $("margin").oninput = e => { state.margin = +e.target.value || 0; renderPreview(); };
+  $("spineGap").oninput = e => { state.spineGap = +e.target.value || 0; renderPreview(); };
   $("borderWidth").oninput = e => { state.borderWidth = +e.target.value || 0; renderPreview(); };
   $("borderColor").oninput = e => { state.borderColor = e.target.value; renderPreview(); };
   $("pageBg").oninput = e => { state.pageBg = e.target.value; renderPreview(); };
@@ -409,14 +417,24 @@ function renderPreview() {
   const layout = oneSheetLayouts[state.pageCount];
   const colW = width / layout.cols;
   const rowH = height / layout.rows;
+  const spinePx = (state.spineGap / mmW) * width;
 
   layout.slots.forEach(slot => {
     const pageDiv = document.createElement("div");
     pageDiv.className = `page ${slot.rotate === 180 ? 'flipped' : ''}`;
     
-    pageDiv.style.left = (slot.col * colW) + "px";
+    let leftPos = slot.col * colW;
+    let cellW = colW;
+
+    if (slot.col === 0 && slot.row === 3) {
+      cellW = colW + spinePx;
+    } else if (slot.col > 0 && slot.row === 3) {
+      leftPos += spinePx;
+    }
+
+    pageDiv.style.left = leftPos + "px";
     pageDiv.style.top = (slot.row * rowH) + "px";
-    pageDiv.style.width = colW + "px";
+    pageDiv.style.width = cellW + "px";
     pageDiv.style.height = rowH + "px";
     pageDiv.style.padding = (state.margin / mmW * width) + "px";
 
@@ -442,6 +460,13 @@ function renderPreview() {
       const lblText = slot.customLabel || `Page ${slot.logical}`;
       empty.innerHTML = `<div>${lblText}</div>`;
       pageDiv.appendChild(empty);
+    }
+
+    if (state.guides === 'yes') {
+      const cross = document.createElement("div");
+      cross.className = "diagonal-cross";
+      cross.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="0" y1="0" x2="100" y2="100" stroke="#aaa" stroke-width="0.5"/><line x1="100" y1="0" x2="0" y2="100" stroke="#aaa" stroke-width="0.5"/></svg>`;
+      pageDiv.appendChild(cross);
     }
 
     const label = document.createElement("div");
@@ -472,6 +497,12 @@ function renderPreview() {
       hFold.style.top = (r * rowH) + "px";
       container.appendChild(hFold);
     }
+    if (spinePx > 0) {
+      const spineFold = document.createElement("div");
+      spineFold.className = "foldline v spine";
+      spineFold.style.left = (colW + spinePx) + "px";
+      container.appendChild(spineFold);
+    }
   }
 }
 
@@ -494,9 +525,18 @@ function exportPNG() {
   const layout = oneSheetLayouts[state.pageCount];
   const colW = canvas.width / layout.cols;
   const rowH = canvas.height / layout.rows;
+  const spinePx = state.spineGap * mmToPx;
 
   layout.slots.forEach(slot => {
-    const x = slot.col * colW;
+    let x = slot.col * colW;
+    let widthPx = colW;
+
+    if (slot.col === 0 && slot.row === 3) {
+      widthPx = colW + spinePx;
+    } else if (slot.col > 0 && slot.row === 3) {
+      x += spinePx;
+    }
+
     const y = slot.row * rowH;
 
     const assignedId = state.assignments[slot.logical - 1];
@@ -505,11 +545,11 @@ function exportPNG() {
     const effectiveFit = meta.fit === 'global' ? state.objectFit : meta.fit;
 
     const marginPx = state.margin * mmToPx;
-    const drawW = colW - (marginPx * 2);
+    const drawW = widthPx - (marginPx * 2);
     const drawH = rowH - (marginPx * 2);
 
     ctx.save();
-    ctx.translate(x + colW / 2, y + rowH / 2);
+    ctx.translate(x + widthPx / 2, y + rowH / 2);
     if (slot.rotate) ctx.rotate((slot.rotate * Math.PI) / 180);
 
     if (photo) {
@@ -564,13 +604,14 @@ function exportPNG() {
 function exportJSON() {
   const data = {
     app: "One-Sheet Zine Studio",
-    version: 6,
+    version: 7,
     state: {
       pageCount: state.pageCount,
       sheetOrientation: state.sheetOrientation,
       paper: state.paper,
       objectFit: state.objectFit,
       margin: state.margin,
+      spineGap: state.spineGap,
       borderWidth: state.borderWidth,
       borderColor: state.borderColor,
       pageBg: state.pageBg,
@@ -597,6 +638,7 @@ async function importJSONFile(file) {
       $("paper").value = state.paper;
       $("objectFit").value = state.objectFit;
       $("margin").value = state.margin;
+      if (state.spineGap !== undefined) $("spineGap").value = state.spineGap;
       $("borderWidth").value = state.borderWidth;
       $("borderColor").value = state.borderColor;
       $("pageBg").value = state.pageBg;
