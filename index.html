@@ -136,7 +136,7 @@ button.small { padding: 4px 8px; font-size: 0.78rem; }
           <input id="margin" type="number" min="0" max="30" step="0.5" value="4">
         </div>
         <div class="field">
-          <label>Spine Gap (mm)</label>
+          <label>Spine Fold-Over Margin (mm)</label>
           <input id="spineGap" type="number" min="0" max="25" step="0.5" value="5">
         </div>
       </div>
@@ -423,20 +423,26 @@ function renderPreview() {
     const pageDiv = document.createElement("div");
     pageDiv.className = `page ${slot.rotate === 180 ? 'flipped' : ''}`;
     
-    let leftPos = slot.col * colW;
-    let cellW = colW;
-
-    if (slot.col === 0 && slot.row === 3) {
-      cellW = colW + spinePx;
-    } else if (slot.col > 0 && slot.row === 3) {
-      leftPos += spinePx;
-    }
+    const leftPos = slot.col * colW;
 
     pageDiv.style.left = leftPos + "px";
     pageDiv.style.top = (slot.row * rowH) + "px";
-    pageDiv.style.width = cellW + "px";
+    pageDiv.style.width = colW + "px";
     pageDiv.style.height = rowH + "px";
-    pageDiv.style.padding = (state.margin / mmW * width) + "px";
+    
+    let extraLeft = 0;
+    let extraRight = 0;
+    if (slot.logical === 16) {
+      extraRight = spinePx;
+    } else if (slot.logical === 1) {
+      extraLeft = spinePx;
+    }
+
+    const padTopBottom = (state.margin / mmW * width);
+    pageDiv.style.paddingTop = padTopBottom + "px";
+    pageDiv.style.paddingBottom = padTopBottom + "px";
+    pageDiv.style.paddingLeft = ((state.margin / mmW * width) + extraLeft) + "px";
+    pageDiv.style.paddingRight = ((state.margin / mmW * width) + extraRight) + "px";
 
     const assignedId = state.assignments[slot.logical - 1];
     const photo = state.photos.find(p => p.id === assignedId);
@@ -528,15 +534,7 @@ function exportPNG() {
   const spinePx = state.spineGap * mmToPx;
 
   layout.slots.forEach(slot => {
-    let x = slot.col * colW;
-    let widthPx = colW;
-
-    if (slot.col === 0 && slot.row === 3) {
-      widthPx = colW + spinePx;
-    } else if (slot.col > 0 && slot.row === 3) {
-      x += spinePx;
-    }
-
+    const x = slot.col * colW;
     const y = slot.row * rowH;
 
     const assignedId = state.assignments[slot.logical - 1];
@@ -545,11 +543,17 @@ function exportPNG() {
     const effectiveFit = meta.fit === 'global' ? state.objectFit : meta.fit;
 
     const marginPx = state.margin * mmToPx;
-    const drawW = widthPx - (marginPx * 2);
+    let extraLeft = 0;
+    let extraRight = 0;
+
+    if (slot.logical === 16) extraRight = spinePx;
+    else if (slot.logical === 1) extraLeft = spinePx;
+
+    const drawW = colW - (marginPx * 2) - extraLeft - extraRight;
     const drawH = rowH - (marginPx * 2);
 
     ctx.save();
-    ctx.translate(x + widthPx / 2, y + rowH / 2);
+    ctx.translate(x + colW / 2 + (extraLeft - extraRight) / 2, y + rowH / 2);
     if (slot.rotate) ctx.rotate((slot.rotate * Math.PI) / 180);
 
     if (photo) {
@@ -604,7 +608,7 @@ function exportPNG() {
 function exportJSON() {
   const data = {
     app: "One-Sheet Zine Studio",
-    version: 7,
+    version: 8,
     state: {
       pageCount: state.pageCount,
       sheetOrientation: state.sheetOrientation,
