@@ -1,507 +1,637 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Local Zine Imposer</title>
-<style>
-:root{
-  --bg:#171717;--panel:#222;--panel2:#2b2b2b;--line:#444;--text:#f4f4f4;
-  --muted:#aaa;--accent:#8ec5ff;--paper:#fff;--ink:#111;
-}
-*{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-body{min-height:100vh}
-button,input,select{font:inherit}
-button{border:1px solid #555;background:#333;color:#fff;border-radius:9px;padding:9px 12px;cursor:pointer}
-button:hover{background:#3d3d3d}
-button.primary{background:#356fa8;border-color:#5f9bd4}
-button.danger{background:#4a2929}
-button.small{padding:6px 9px;font-size:.9rem}
-.app{display:grid;grid-template-columns:minmax(0,1fr) 350px;min-height:100vh}
-.preview-area{min-width:0;display:flex;flex-direction:column}
-.topbar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);background:#191919;position:sticky;top:0;z-index:5}
-.topbar h1{font-size:1rem;margin:0;white-space:nowrap}
-.topbar .spacer{flex:1}
-.preview-wrap{padding:20px;overflow:auto;flex:1;display:flex;justify-content:center;align-items:flex-start}
-#paperPreview{position:relative;background:#fff;box-shadow:0 8px 30px #0008;overflow:hidden;flex:none}
-.page{position:absolute;overflow:hidden}
-.page img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.page .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#999;font-size:12px;text-align:center;padding:8px}
-.page .border{position:absolute;inset:0;border:2px solid var(--border,#111);pointer-events:none}
-.page .label{position:absolute;left:5px;top:4px;font-size:9px;color:#777;background:#fff9;padding:1px 3px;border-radius:3px;z-index:2}
-.page.spread-left img,.page.spread-right img{object-fit:cover}
-.foldline{position:absolute;z-index:3;pointer-events:none}
-.foldline.v{top:0;bottom:0;border-left:1px dashed #888}
-.foldline.h{left:0;right:0;border-top:1px dashed #888}
-.sidebar{background:var(--panel);border-left:1px solid var(--line);overflow:auto}
-.section{padding:14px;border-bottom:1px solid var(--line)}
-.section h2{font-size:.95rem;margin:0 0 10px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.field{margin-bottom:9px}
-.field label{display:block;color:var(--muted);font-size:.78rem;margin-bottom:4px}
-.field input,.field select{width:100%;background:#171717;color:#fff;border:1px solid #555;border-radius:7px;padding:8px}
-.range-row{display:grid;grid-template-columns:1fr 64px;gap:7px;align-items:center}
-.range-row input[type=number]{padding:6px}
-.drop{border:1px dashed #777;border-radius:10px;padding:18px;text-align:center;color:#bbb;background:#1b1b1b}
-.drop.drag{border-color:var(--accent);background:#172332}
-.actions{display:flex;flex-wrap:wrap;gap:7px}
-.photos{display:grid;gap:7px}
-.photo-row{display:grid;grid-template-columns:42px 1fr auto;gap:7px;align-items:center;background:#191919;border:1px solid #3c3c3c;border-radius:8px;padding:5px}
-.thumb{width:42px;height:42px;object-fit:cover;border-radius:5px;background:#333}
-.photo-row .name{font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.photo-row select{padding:5px;font-size:.75rem}
-.page-list{display:grid;gap:6px;max-height:320px;overflow:auto}
-.page-row{display:grid;grid-template-columns:38px 1fr 72px;gap:6px;align-items:center;background:#191919;padding:5px;border-radius:7px}
-.page-row .pnum{font-size:.8rem;color:#aaa}
-.page-row select{padding:5px;font-size:.75rem}
-.check{display:flex;gap:7px;align-items:center;font-size:.82rem;margin:7px 0}
-.help{font-size:.74rem;color:#999;line-height:1.4}
-.status{font-size:.76rem;color:#aaa;margin-top:7px}
-@media(max-width:850px){
-  .app{grid-template-columns:1fr}
-  .sidebar{border-left:0;border-top:1px solid var(--line)}
-  .preview-wrap{min-height:52vh;padding:12px}
-  .topbar{position:sticky}
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Photo Zine Generator</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --panel-bg: #1e1e1e;
+            --accent-color: #007acc;
+            --text-color: #e0e0e0;
+            --border-color: #333;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Controls */
+        #sidebar {
+            width: 380px;
+            background-color: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            background-color: #252526;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .sidebar-content {
+            padding: 16px;
+            overflow-y: auto;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: #252526;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .control-group h3 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        input[type="number"], select, input[type="color"], input[type="file"] {
+            background: #333;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        input[type="range"] {
+            width: 60%;
+        }
+
+        .inline-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .inline-label input[type="checkbox"] {
+            width: auto;
+        }
+
+        /* Page Slot Assignment Panel */
+        .page-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 220px;
+            overflow-y: auto;
+            background: #1a1a1a;
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        .page-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #2a2a2a;
+            padding: 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .page-item select {
+            flex-grow: 1;
+        }
+
+        /* Buttons */
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        button, .file-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-align: center;
+            transition: background 0.2s;
+        }
+
+        button:hover, .file-btn:hover {
+            filter: brightness(1.1);
+        }
+
+        .btn-secondary {
+            background-color: #444;
+        }
+
+        input[type="file"].hidden-input {
+            display: none;
+        }
+
+        /* Preview Workspace */
+        #workspace {
+            flex-grow: 1;
+            background-color: #181818;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: auto;
+            position: relative;
+        }
+
+        #canvas-container {
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+            background: #fff;
+            max-width: 100%;
+            max-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column-reverse;
+                overflow: auto;
+            }
+            #sidebar {
+                width: 100%;
+                height: 50vh;
+            }
+            #workspace {
+                height: 50vh;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="app">
-  <main class="preview-area">
-    <div class="topbar">
-      <h1>Local Zine Imposer</h1>
-      <div class="spacer"></div>
-      <button id="fitBtn" class="small">Fit</button>
-      <button id="printBtn" class="small primary">Print</button>
-    </div>
-    <div class="preview-wrap"><div id="paperPreview"></div></div>
-  </main>
 
-  <aside class="sidebar">
-    <div class="section">
-      <h2>1. Photos</h2>
-      <div id="drop" class="drop">Drop photos here<br><small>or</small><br><button id="pickBtn" class="primary">Choose photos</button></div>
-      <input id="fileInput" type="file" accept="image/*" multiple hidden>
-      <div class="actions" style="margin-top:8px">
-        <button id="clearPhotos" class="small danger">Clear photos</button>
-      </div>
-      <div id="photoList" class="photos" style="margin-top:9px"></div>
-    </div>
+    <!-- SIDEBAR CONTROLS -->
+    <div id="sidebar">
+        <div class="sidebar-header">Zine Layout Studio</div>
+        <div class="sidebar-content">
 
-    <div class="section">
-      <h2>2. Paper & zine</h2>
-      <div class="grid2">
-        <div class="field"><label>Paper</label><select id="paper"><option>A4</option><option>A3</option><option>US Letter</option></select></div>
-        <div class="field"><label>Sheet orientation</label><select id="sheetOrientation"><option value="landscape">Landscape</option><option value="portrait">Portrait</option></select></div>
-      </div>
-      <div class="grid2">
-        <div class="field"><label>Pages</label><select id="pageCount"><option value="8">8</option><option value="16">16</option></select></div>
-        <div class="field"><label>Page orientation</label><select id="pageOrientation"><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></div>
-      </div>
-      <div class="help">8 pages is the classic one-sheet mini-zine. 16 pages uses two 8-page sheets.</div>
-    </div>
+            <!-- 1. Media Upload -->
+            <div class="control-group">
+                <h3>1. Photos & Project</h3>
+                <label class="file-btn">
+                    📷 Load Images
+                    <input type="file" id="imageInput" multiple accept="image/*" class="hidden-input">
+                </label>
+                <div class="btn-grid">
+                    <label class="file-btn btn-secondary">
+                        📥 Import JSON
+                        <input type="file" id="jsonInput" accept=".json" class="hidden-input">
+                    </label>
+                    <button class="btn-secondary" onclick="exportJSON()">📤 Export JSON</button>
+                </div>
+            </div>
 
-    <div class="section">
-      <h2>3. Margins & styling</h2>
-      <div class="grid2">
-        <div class="field"><label>Outer margin (mm)</label><input id="margin" type="number" min="0" max="50" step=".5" value="4"></div>
-        <div class="field"><label>Page gap (mm)</label><input id="gap" type="number" min="0" max="20" step=".5" value="0"></div>
-      </div>
-      <div class="grid2">
-        <div class="field"><label>Border width (mm)</label><input id="borderWidth" type="number" min="0" max="10" step=".1" value="0.5"></div>
-        <div class="field"><label>Border colour</label><input id="borderColor" type="color" value="#111111"></div>
-      </div>
-      <div class="grid2">
-        <div class="field"><label>Page background</label><input id="pageBg" type="color" value="#ffffff"></div>
-        <div class="field"><label>Show fold guides</label><select id="guides"><option value="yes">Yes</option><option value="no">No</option></select></div>
-      </div>
-      <label class="check"><input id="spine" type="checkbox"> Allow for a spine / fold-over margin</label>
-      <div id="spineOptions" style="display:none">
-        <div class="grid2">
-          <div class="field"><label>Spine shift (mm)</label><input id="spineShift" type="number" min="0" max="30" step=".5" value="5"></div>
-          <div class="field"><label>Spine side</label><select id="spineSide"><option value="left">Left</option><option value="right">Right</option></select></div>
+            <!-- 2. Format & Layout Config -->
+            <div class="control-group">
+                <h3>2. Print Settings</h3>
+                <label>Paper Format
+                    <select id="paperSize" onchange="render()">
+                        <option value="a4">A4 (297 × 210 mm)</option>
+                        <option value="a3">A3 (420 × 297 mm)</option>
+                        <option value="letter">US Letter (11 × 8.5 in)</option>
+                    </select>
+                </label>
+                <label>Page Orientation
+                    <select id="zineOrientation" onchange="render()">
+                        <option value="portrait">Portrait Pages</option>
+                        <option value="landscape">Landscape Pages</option>
+                    </select>
+                </label>
+                <label>Pages per Sheet
+                    <select id="pageCount" onchange="updatePageSlots(); render();">
+                        <option value="8">8 Pages (1 Sheet)</option>
+                        <option value="16">16 Pages (1 Sheet Folding)</option>
+                    </select>
+                </label>
+            </div>
+
+            <!-- 3. Styling & Margins -->
+            <div class="control-group">
+                <h3>3. Layout & Style Settings</h3>
+                <label>Background Color
+                    <input type="color" id="bgColor" value="#ffffff" onchange="render()">
+                </label>
+                <label>Outer Padding: <span id="paddingVal">10</span>px
+                    <input type="range" id="padding" min="0" max="50" value="10" oninput="document.getElementById('paddingVal').innerText=this.value; render()">
+                </label>
+                <label>Image Spacing: <span id="spacingVal">5</span>px
+                    <input type="range" id="spacing" min="0" max="30" value="5" oninput="document.getElementById('spacingVal').innerText=this.value; render()">
+                </label>
+                <label class="inline-label">
+                    <input type="checkbox" id="enableSpine" onchange="render()">
+                    <span>Include Folding Spine Gap Layout (Emon Hassan Style)</span>
+                </label>
+                <label>Spine Width Offset: <span id="spineVal">15</span>px
+                    <input type="range" id="spineGap" min="0" max="60" value="15" oninput="document.getElementById('spineVal').innerText=this.value; render()">
+                </label>
+            </div>
+
+            <!-- 4. Page Sequence and Panoramic Spans -->
+            <div class="control-group">
+                <h3>4. Page Ordering & Panoramas</h3>
+                <p style="font-size: 0.75rem; color:#aaa;">Assign images to zine pages. Check "Panoramic Span" to strip inner borders with the adjacent page.</p>
+                <div class="page-list" id="pageSlotContainer"></div>
+            </div>
+
+            <!-- 5. Exports -->
+            <div class="control-group">
+                <h3>5. Render & Export</h3>
+                <div class="btn-grid">
+                    <button onclick="exportImage('image/png')">Save PNG</button>
+                    <button onclick="exportImage('image/tiff')">Save TIFF</button>
+                </div>
+            </div>
+
         </div>
-      </div>
     </div>
 
-    <div class="section">
-      <h2>4. Page order & covers</h2>
-      <div class="grid2">
-        <div class="field"><label>Front cover</label><select id="frontCover"></select></div>
-        <div class="field"><label>Back cover</label><select id="backCover"></select></div>
-      </div>
-      <div class="field"><label>Sort interior pages</label><select id="sortMode">
-        <option value="upload">Upload order</option>
-        <option value="name">Filename A–Z</option>
-        <option value="nameDesc">Filename Z–A</option>
-      </select></div>
-      <div id="pageAssignments" class="page-list"></div>
-      <div class="help">The logical page numbers are the pages the reader sees after folding. The app imposes them onto the printable sheet automatically.</div>
+    <!-- LIVE PREVIEW CANVAS WORKSPACE -->
+    <div id="workspace">
+        <div id="canvas-container">
+            <canvas id="zineCanvas"></canvas>
+        </div>
     </div>
 
-    <div class="section">
-      <h2>5. Seamless spreads</h2>
-      <div class="field"><label>Adjacent logical pages</label><select id="spreadPair"></select></div>
-      <label class="check"><input id="spreadNone" type="radio" name="spread" value="none" checked> Normal pages</label>
-      <label class="check"><input id="spreadNoBorder" type="radio" name="spread" value="noborder"> No border between them</label>
-      <label class="check"><input id="spreadContinuous" type="radio" name="spread" value="continuous"> One continuous outer border</label>
-      <div class="help">This affects the two adjacent pages as a visual spread. Images remain separate files but the border treatment is continuous across the pair.</div>
-    </div>
+    <script>
+        // Store state variables
+        let uploadedImages = []; // Array of { id, name, src, imgObject }
+        let pageSlots = [];      // Array of { pageNum, imageId, isFrontCover, isBackCover, isPanoramaNext }
+        
+        // Canvas Setup
+        const canvas = document.getElementById('zineCanvas');
+        const ctx = canvas.getContext('2d');
 
-    <div class="section">
-      <h2>6. Save / export</h2>
-      <div class="actions">
-        <button id="pngBtn" class="primary">Save PNG</button>
-        <button id="tiffBtn">Save TIFF</button>
-        <button id="jsonOut">Export settings</button>
-        <button id="jsonIn">Import settings</button>
-        <input id="jsonInput" type="file" accept=".json,application/json" hidden>
-      </div>
-      <div id="status" class="status">Everything runs locally in this page. Photos are never uploaded.</div>
-    </div>
-  </aside>
-</div>
+        // Dimensions setup in points/pixels for high-res render (300 DPI target)
+        const paperDimensions = {
+            'a4': { w: 3508, h: 2480 },
+            'a3': { w: 4960, h: 3508 },
+            'letter': { w: 3300, h: 2550 }
+        };
 
-<script>
-"use strict";
+        window.onload = () => {
+            updatePageSlots();
+            render();
+        };
 
-/* Local-only zine imposer.
-   No fetch(), no CDN, no analytics, no server calls. */
+        // File Loading
+        document.getElementById('imageInput').addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            let loadedCount = 0;
 
-const $ = id => document.getElementById(id);
-const state = {
-  photos: [], // {id,name,url,img}
-  pageCount: 8,
-  frontCover: 1,
-  backCover: 8,
-  assignments: [],
-  spreadPair: "none",
-  spreadMode: "none",
-  paper: "A4",
-  sheetOrientation: "landscape",
-  pageOrientation: "portrait",
-  margin: 4, gap: 0, borderWidth: .5, borderColor:"#111111",
-  pageBg:"#ffffff", guides:"yes",
-  spine:false, spineShift:5, spineSide:"left",
-  sortMode:"upload"
-};
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const imgObj = {
+                            id: 'img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                            name: file.name,
+                            src: event.target.result,
+                            element: img
+                        };
+                        uploadedImages.push(imgObj);
+                        loadedCount++;
+                        if (loadedCount === files.length) {
+                            autoAssignImages();
+                            updatePageSlots();
+                            render();
+                        }
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        });
 
-const paperMM = {
-  "A4":[210,297], "A3":[297,420], "US Letter":[215.9,279.4]
-};
+        function updatePageSlots() {
+            const count = parseInt(document.getElementById('pageCount').value);
+            const newSlots = [];
 
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
-}
+            for (let i = 1; i <= count; i++) {
+                const existing = pageSlots.find(s => s.pageNum === i);
+                newSlots.push(existing || {
+                    pageNum: i,
+                    imageId: uploadedImages[i - 1] ? uploadedImages[i - 1].id : 'none',
+                    isPanoramaNext: false
+                });
+            }
+            pageSlots = newSlots;
+            renderPageSlotsUI();
+        }
 
-$("pickBtn").onclick=()=>$("fileInput").click();
-$("fileInput").onchange=e=>addFiles([...e.target.files]);
-$("drop").ondragover=e=>{e.preventDefault();$("drop").classList.add("drag")};
-$("drop").ondragleave=()=>$("drop").classList.remove("drag");
-$("drop").ondrop=e=>{e.preventDefault();$("drop").classList.remove("drag");addFiles([...e.dataTransfer.files].filter(f=>f.type.startsWith("image/")))};
-$("clearPhotos").onclick=()=>{state.photos.forEach(p=>URL.revokeObjectURL(p.url));state.photos=[];state.assignments=[];renderAll()};
+        function autoAssignImages() {
+            pageSlots.forEach((slot, idx) => {
+                if (uploadedImages[idx]) {
+                    slot.imageId = uploadedImages[idx].id;
+                }
+            });
+        }
 
-async function addFiles(files){
-  for(const f of files){
-    if(!f.type.startsWith("image/")) continue;
-    const url=URL.createObjectURL(f);
-    const img=new Image();
-    img.src=url;
-    await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject});
-    state.photos.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),name:f.name,url,img});
-  }
-  sortPhotos();
-  rebuildAssignments();
-  renderAll();
-}
+        function renderPageSlotsUI() {
+            const container = document.getElementById('pageSlotContainer');
+            container.innerHTML = '';
 
-function sortPhotos(){
-  if(state.sortMode==="name") state.photos.sort((a,b)=>a.name.localeCompare(b.name));
-  if(state.sortMode==="nameDesc") state.photos.sort((a,b)=>b.name.localeCompare(a.name));
-}
-function rebuildAssignments(){
-  const n=state.pageCount;
-  let ids=state.photos.map(p=>p.id);
-  const interior=ids.filter(id=>id!==state.frontCover && id!==state.backCover);
-  state.assignments=Array(n).fill(null);
-  if(state.photos.length){
-    state.assignments[state.frontCover-1]=ids[0]||null;
-    state.assignments[state.backCover-1]=ids[Math.min(1,ids.length-1)]||null;
-    let k=2;
-    for(let i=0;i<n;i++){
-      if(i===state.frontCover-1||i===state.backCover-1) continue;
-      state.assignments[i]=interior[k-2] || null; k++;
-    }
-  }
-}
+            pageSlots.forEach((slot, index) => {
+                const div = document.createElement('div');
+                div.className = 'page-item';
 
-function photoById(id){return state.photos.find(p=>p.id===id)}
-function refreshCoverSelects(){
-  for(const id of ["frontCover","backCover"]){
-    const el=$(id), old=Number(el.value||1); el.innerHTML="";
-    for(let i=1;i<=state.pageCount;i++){let o=document.createElement("option");o.value=i;o.textContent="Page "+i;el.appendChild(o)}
-    el.value=old<=state.pageCount?old:(id==="frontCover"?1:state.pageCount);
-  }
-}
-function refreshSpreadSelect(){
-  const el=$("spreadPair"), old=el.value;
-  el.innerHTML='<option value="none">No spread</option>';
-  for(let i=1;i<state.pageCount;i++){
-    let o=document.createElement("option");o.value=`${i}-${i+1}`;o.textContent=`Pages ${i} + ${i+1}`;el.appendChild(o)
-  }
-  el.value=[...el.options].some(o=>o.value===old)?old:"none";
-}
-function refreshAssignments(){
-  const wrap=$("pageAssignments");wrap.innerHTML="";
-  for(let i=0;i<state.pageCount;i++){
-    const row=document.createElement("div");row.className="page-row";
-    const p=document.createElement("div");p.className="pnum";p.textContent=`${i+1}${i+1===state.frontCover?" ★":""}${i+1===state.backCover?" ◀":""}`;
-    const sel=document.createElement("select");
-    let blank=document.createElement("option");blank.value="";blank.textContent="— blank —";sel.appendChild(blank);
-    state.photos.forEach(ph=>{let o=document.createElement("option");o.value=ph.id;o.textContent=ph.name;sel.appendChild(o)});
-    sel.value=state.assignments[i]||"";
-    sel.onchange=()=>{state.assignments[i]=sel.value||null;renderPreview()};
-    const mark=document.createElement("button");mark.className="small";mark.textContent=i+1===state.frontCover?"Front":i+1===state.backCover?"Back":"Cover";
-    mark.onclick=()=>{
-      if(i+1===state.frontCover) state.frontCover=0; else if(i+1===state.backCover) state.backCover=0;
-      else state.frontCover=i+1;
-      if(!state.frontCover) state.frontCover=i+1;
-      updateControls();renderPreview();
-    };
-    row.append(p,sel,mark);wrap.appendChild(row);
-  }
-}
+                let labelText = `Pg ${slot.pageNum}`;
+                if (slot.pageNum === 1) labelText += " (Front Cover)";
+                if (slot.pageNum === pageSlots.length) labelText += " (Back Cover)";
 
-function renderPhotoList(){
-  const el=$("photoList");el.innerHTML="";
-  state.photos.forEach((ph,i)=>{
-    const row=document.createElement("div");row.className="photo-row";
-    row.innerHTML=`<img class="thumb" src="${ph.url}"><div class="name" title="${escapeHtml(ph.name)}">${i+1}. ${escapeHtml(ph.name)}</div><button class="small" data-id="${ph.id}">×</button>`;
-    row.querySelector("button").onclick=()=>{state.photos=state.photos.filter(x=>x.id!==ph.id);state.assignments=state.assignments.map(x=>x===ph.id?null:x);URL.revokeObjectURL(ph.url);renderAll()};
-    el.appendChild(row);
-  });
-}
+                let options = `<option value="none">-- Blank --</option>`;
+                uploadedImages.forEach(img => {
+                    const sel = img.id === slot.imageId ? 'selected' : '';
+                    options += `<option value="${img.id}" ${sel}>${img.name}</option>`;
+                });
 
-function updateControls(){
-  $("paper").value=state.paper;$("sheetOrientation").value=state.sheetOrientation;
-  $("pageCount").value=state.pageCount;$("pageOrientation").value=state.pageOrientation;
-  $("margin").value=state.margin;$("gap").value=state.gap;$("borderWidth").value=state.borderWidth;
-  $("borderColor").value=state.borderColor;$("pageBg").value=state.pageBg;$("guides").value=state.guides;
-  $("spine").checked=state.spine;$("spineShift").value=state.spineShift;$("spineSide").value=state.spineSide;
-  $("spineOptions").style.display=state.spine?"block":"none";
-  $("frontCover").value=state.frontCover;$("backCover").value=state.backCover;$("sortMode").value=state.sortMode;
-  $("spreadPair").value=state.spreadPair;
-  document.querySelectorAll('input[name="spread"]').forEach(x=>x.checked=x.value===state.spreadMode);
-}
+                const panChecked = slot.isPanoramaNext ? 'checked' : '';
+                const hidePan = (index === pageSlots.length - 1) ? 'style="display:none;"' : '';
 
-function bind(){
-  $("paper").onchange=e=>{state.paper=e.target.value;renderPreview()};
-  $("sheetOrientation").onchange=e=>{state.sheetOrientation=e.target.value;renderPreview()};
-  $("pageOrientation").onchange=e=>{state.pageOrientation=e.target.value;renderPreview()};
-  $("pageCount").onchange=e=>{state.pageCount=+e.target.value;state.frontCover=1;state.backCover=state.pageCount;rebuildAssignments();renderAll()};
-  $("margin").oninput=e=>{state.margin=+e.target.value||0;renderPreview()};
-  $("gap").oninput=e=>{state.gap=+e.target.value||0;renderPreview()};
-  $("borderWidth").oninput=e=>{state.borderWidth=+e.target.value||0;renderPreview()};
-  $("borderColor").oninput=e=>{state.borderColor=e.target.value;renderPreview()};
-  $("pageBg").oninput=e=>{state.pageBg=e.target.value;renderPreview()};
-  $("guides").onchange=e=>{state.guides=e.target.value;renderPreview()};
-  $("spine").onchange=e=>{state.spine=e.target.checked;$("spineOptions").style.display=state.spine?"block":"none";renderPreview()};
-  $("spineShift").oninput=e=>{state.spineShift=+e.target.value||0;renderPreview()};
-  $("spineSide").onchange=e=>{state.spineSide=e.target.value;renderPreview()};
-  $("frontCover").onchange=e=>{state.frontCover=+e.target.value;rebuildAssignments();renderAll()};
-  $("backCover").onchange=e=>{state.backCover=+e.target.value;rebuildAssignments();renderAll()};
-  $("sortMode").onchange=e=>{state.sortMode=e.target.value;sortPhotos();rebuildAssignments();renderAll()};
-  $("spreadPair").onchange=e=>{state.spreadPair=e.target.value;renderPreview()};
-  document.querySelectorAll('input[name="spread"]').forEach(x=>x.onchange=()=>{state.spreadMode=document.querySelector('input[name="spread"]:checked').value;renderPreview()});
-  $("fitBtn").onclick=()=>renderPreview();
-  $("printBtn").onclick=()=>window.print();
-  $("pngBtn").onclick=()=>exportRaster("png");
-  $("tiffBtn").onclick=()=>exportRaster("tiff");
-  $("jsonOut").onclick=exportJSON;
-  $("jsonIn").onclick=()=>$("jsonInput").click();
-  $("jsonInput").onchange=e=>importJSONFile(e.target.files[0]);
-}
+                div.innerHTML = `
+                    <span style="width: 100px;">${labelText}</span>
+                    <select onchange="assignImageToPage(${slot.pageNum}, this.value)">${options}</select>
+                    <label class="inline-label" ${hidePan} title="Connect borderlessly with Page ${slot.pageNum + 1}">
+                        <input type="checkbox" ${panChecked} onchange="togglePanorama(${slot.pageNum}, this.checked)"> Panoramic Span ➔
+                    </label>
+                `;
+                container.appendChild(div);
+            });
+        }
 
-function getSheetSize(){
-  let [w,h]=paperMM[state.paper];
-  if(state.sheetOrientation==="portrait") return [w,h]; return [h,w];
-}
-function getGrid(){
-  // Standard 8-page one-sheet imposition: 4 logical pages per side.
-  // 16 pages: two sheets, each handled as its own 8-page imposed sheet in export.
-  return {cols:4,rows:1};
-}
-function impose8(){
-  // Reader page numbers -> physical positions, left to right.
-  // Side A: back cover, page 1, page 2, page 7
-  // Side B: page 6, page 3, page 4, page 5
-  return {
-    front:[8,1,2,7],
-    back:[6,3,4,5]
-  };
-}
-function renderPreview(){
-  const paper=$("paperPreview");paper.innerHTML="";
-  const [sw,sh]=getSheetSize();
-  // Preview always shows the first printable side; a side switch is intentionally simple:
-  // clicking the paper toggles between front/back.
-  if(!renderPreview.side)renderPreview.side="front";
-  paper.dataset.side=renderPreview.side;
-  const scale=Math.min((window.innerWidth-390)/sw, (window.innerHeight-120)/sh, 2.2);
-  const W=Math.max(320,sw*scale),H=sh*scale;
-  paper.style.width=W+"px";paper.style.height=H+"px";
-  paper.style.background=state.pageBg;
-  const positions=impose8()[renderPreview.side];
-  const pw=W/4,ph=H;
-  positions.forEach((logical,idx)=>{
-    const div=document.createElement("div");div.className="page";
-    div.style.left=(idx*pw + state.gap/Math.max(sw,1)*W/2)+"px";
-    div.style.top="0";div.style.width=(pw-state.gap/Math.max(sw,1)*W)+"px";div.style.height=H+"px";
-    const id=state.assignments[logical-1], phObj=photoById(id);
-    if(phObj){const im=document.createElement("img");im.src=phObj.url;div.appendChild(im)}
-    else {const e=document.createElement("div");e.className="empty";e.textContent=`Page ${logical}\\n(no photo)`;div.appendChild(e)}
-    const label=document.createElement("div");label.className="label";label.textContent=`p${logical}`;div.appendChild(label);
+        function assignImageToPage(pageNum, imgId) {
+            const slot = pageSlots.find(s => s.pageNum === pageNum);
+            if (slot) slot.imageId = imgId;
+            render();
+        }
 
-    let border=true;
-    const pair=state.spreadPair.split("-").map(Number);
-    if(state.spreadMode==="noborder" && pair.length===2 && (logical===pair[0]||logical===pair[1])){
-      // hide the touching inner border only
-      border=true;
-    }
-    const b=document.createElement("div");b.className="border";
-    b.style.borderColor=state.borderColor;b.style.borderWidth=(state.borderWidth*scale)+"px";
-    if(state.spreadMode==="noborder" && pair.length===2 && logical===pair[0]) b.style.borderRight="0";
-    if(state.spreadMode==="noborder" && pair.length===2 && logical===pair[1]) b.style.borderLeft="0";
-    if(state.spreadMode==="continuous" && pair.length===2 && (logical===pair[0]||logical===pair[1])){
-      b.style.borderTopWidth=(state.borderWidth*scale)+"px";
-      b.style.borderBottomWidth=(state.borderWidth*scale)+"px";
-      if(logical===pair[0]) b.style.borderRight="0";
-      if(logical===pair[1]) b.style.borderLeft="0";
-    }
-    div.appendChild(b);
-    paper.appendChild(div);
-  });
-  if(state.guides==="yes"){
-    for(let i=1;i<4;i++){let f=document.createElement("div");f.className="foldline v";f.style.left=(i*W/4)+"px";paper.appendChild(f)}
-  }
-  // A click flips printable side.
-  paper.onclick=()=>{renderPreview.side=renderPreview.side==="front"?"back":"front";renderPreview()};
-  $("status").textContent=`Preview: ${renderPreview.side==="front"?"front":"back"} side • click paper to flip • ${state.paper} ${state.sheetOrientation}`;
-}
+        function togglePanorama(pageNum, checked) {
+            const slot = pageSlots.find(s => s.pageNum === pageNum);
+            if (slot) slot.isPanoramaNext = checked;
+            render();
+        }
 
-function renderAll(){refreshCoverSelects();refreshSpreadSelect();refreshAssignments();renderPhotoList();updateControls();renderPreview()}
+        // --- Core Rendering Engine ---
+        function render() {
+            const paperType = document.getElementById('paperSize').value;
+            const dim = paperDimensions[paperType];
+            
+            canvas.width = dim.w;
+            canvas.height = dim.h;
 
-function imageDataForSide(side, scale=1){
-  const [sw,sh]=getSheetSize(), dpi=300, mmToPx=dpi/25.4;
-  const W=Math.round(sw*mmToPx),H=Math.round(sh*mmToPx);
-  const c=document.createElement("canvas");c.width=W;c.height=H;
-  const ctx=c.getContext("2d");ctx.fillStyle=state.pageBg;ctx.fillRect(0,0,W,H);
-  const positions=impose8()[side], pw=W/4, ph=H;
-  positions.forEach((logical,idx)=>{
-    const x=idx*pw,y=0,w=pw,h=ph;
-    const id=state.assignments[logical-1],p=photoById(id);
-    if(p){
-      const iw=p.img.naturalWidth,ih=p.img.naturalHeight;
-      const r=Math.max(w/iw,h/ih),dw=iw*r,dh=ih*r;
-      ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();
-      ctx.drawImage(p.img,x+(w-dw)/2,y+(h-dh)/2,dw,dh);ctx.restore();
-    }
-    const pair=state.spreadPair.split("-").map(Number);
-    const noInner=state.spreadMode!=="none"&&pair.length===2;
-    ctx.strokeStyle=state.borderColor;ctx.lineWidth=state.borderWidth*mmToPx;
-    const left= x+state.margin*mmToPx, top=y+state.margin*mmToPx;
-    const right=x+w-state.margin*mmToPx,bottom=y+h-state.margin*mmToPx;
-    if(state.spreadMode==="noborder" && pair.includes(logical)){
-      ctx.beginPath();
-      if(logical===pair[0]){ctx.moveTo(left,top);ctx.lineTo(right,top);ctx.lineTo(right,bottom);ctx.lineTo(left,bottom)}
-      else {ctx.moveTo(left,top);ctx.lineTo(right,top);ctx.lineTo(right,bottom);ctx.lineTo(left,bottom)}
-      ctx.stroke();
-      // inner edge is deliberately omitted
-    } else {
-      ctx.strokeRect(left,top,right-left,bottom-top);
-    }
-  });
-  if(state.guides==="yes"){
-    ctx.save();ctx.setLineDash([10,10]);ctx.strokeStyle="#777";ctx.lineWidth=1;
-    for(let i=1;i<4;i++){ctx.beginPath();ctx.moveTo(i*W/4,0);ctx.lineTo(i*W/4,H);ctx.stroke()}ctx.restore();
-  }
-  return c;
-}
-function downloadBlob(blob,name){
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-}
-async function exportRaster(type){
-  // PNG/TIFF exports the currently displayed side.
-  const c=imageDataForSide(renderPreview.side||"front");
-  if(type==="png"){c.toBlob(b=>downloadBlob(b,"zine-"+renderPreview.side+".png"),"image/png");}
-  else {downloadBlob(new Blob([makeTIFF(c)],{type:"image/tiff"}),"zine-"+renderPreview.side+".tiff");}
-}
-function makeTIFF(c){
-  const ctx=c.getContext("2d"),d=ctx.getImageData(0,0,c.width,c.height).data;
-  const pixelCount=c.width*c.height;
-  const header=8, ifdEntries=10, ifdSize=2+ifdEntries*12+4;
-  const bitsOffset=header+ifdSize, xResOffset=bitsOffset+8, yResOffset=xResOffset+8;
-  const pixelOffset=yResOffset+8;
-  const total=pixelOffset+pixelCount*3;
-  const buf=new ArrayBuffer(total),v=new DataView(buf),u8=new Uint8Array(buf);
-  v.setUint16(0,0x4D4D);v.setUint16(2,42);v.setUint32(4,8);
-  v.setUint16(8,ifdEntries);
-  let p=10;
-  const ent=(tag,type,count,val)=>{v.setUint16(p,tag);v.setUint16(p+2,type);v.setUint32(p+4,count);if(type===3&&count===1)v.setUint16(p+8,val);else v.setUint32(p+8,val);p+=12};
-  ent(256,3,1,c.width);ent(257,3,1,c.height);ent(258,3,3,bitsOffset);ent(259,3,1,1);
-  ent(262,3,1,2);ent(273,4,1,pixelOffset);ent(277,3,1,3);ent(278,4,1,c.height);
-  ent(279,4,1,pixelCount*3);ent(282,5,1,xResOffset);ent(283,5,1,yResOffset);
-  // TIFF strip is RGB, no alpha.
-  v.setUint32(10+ifdEntries*12,0);
-  v.setUint16(bitsOffset,8);v.setUint16(bitsOffset+2,8);v.setUint16(bitsOffset+4,8);
-  v.setUint32(xResOffset,300);v.setUint32(xResOffset+4,1);v.setUint32(yResOffset,300);v.setUint32(yResOffset+4,1);
-  let q=pixelOffset;
-  for(let i=0;i<d.length;i+=4){u8[q++]=d[i];u8[q++]=d[i+1];u8[q++]=d[i+2]}
-  return buf;
-}
-function exportJSON(){
-  const data={app:"Local Zine Imposer",version:1,settings:{
-    pageCount:state.pageCount,frontCover:state.frontCover,backCover:state.backCover,
-    assignments:state.assignments,paper:state.paper,sheetOrientation:state.sheetOrientation,
-    pageOrientation:state.pageOrientation,margin:state.margin,gap:state.gap,borderWidth:state.borderWidth,
-    borderColor:state.borderColor,pageBg:state.pageBg,guides:state.guides,spine:state.spine,
-    spineShift:state.spineShift,spineSide:state.spineSide,sortMode:state.sortMode,
-    spreadPair:state.spreadPair,spreadMode:state.spreadMode
-  },photos:state.photos.map(p=>({id:p.id,name:p.name}))};
-  downloadBlob(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),"zine-settings.json");
-}
-async function importJSONFile(file){
-  if(!file)return;
-  try{
-    const data=JSON.parse(await file.text());
-    if(!data.settings)throw Error("Not a Local Zine Imposer settings file.");
-    Object.assign(state,data.settings);
-    // Imported photo IDs are matched against the currently loaded photos by id;
-    // names are used as a fallback where possible.
-    if(Array.isArray(data.photos)){
-      const byName=new Map(state.photos.map(p=>[p.name,p.id]));
-      state.assignments=(state.assignments||[]).map((id,i)=>{
-        const meta=data.photos.find(x=>x.id===id);
-        return meta?(byName.get(meta.name)||null):null;
-      });
-    }
-    renderAll();
-    $("status").textContent="Settings imported. Add the same photos if the project needs its images restored.";
-  }catch(e){alert("Could not import settings: "+e.message)}
-}
-bind();renderAll();
-window.addEventListener("resize",renderPreview);
-</script>
-<style>
-@media print{
-  body{background:#fff}
-  .sidebar,.topbar{display:none!important}
-  .app{display:block}
-  .preview-wrap{padding:0;display:block}
-  #paperPreview{box-shadow:none!important;margin:0}
-}
-</style>
+            const padding = parseInt(document.getElementById('padding').value) * 3;
+            const spacing = parseInt(document.getElementById('spacing').value) * 2;
+            const enableSpine = document.getElementById('enableSpine').checked;
+            const spineGap = enableSpine ? parseInt(document.getElementById('spineGap').value) * 3 : 0;
+            const bgColor = document.getElementById('bgColor').value;
+
+            // Clear Background
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Print fold guidelines
+            drawFoldLines();
+
+            // 8-Page Standard One-Sheet Grid Layout Definition
+            // Traditional 8-Page Fold Arrangement Map (Top row is upside down relative to paper):
+            // Top Row (Rotated 180 deg): Page 10 (or 8), Page 1, Page 8 (Back Cover), Page 5 ...
+            // Standard 8 Page single sheet order mapping across grid cells (2 rows x 4 cols):
+            // Cell Layout:
+            // [ Page 8 (Upside-Down) ][ Page 1 Front (Upside-Down) ][ Page 6 (Upside-Down) ][ Page 7 (Upside-Down) ]
+            // [ Page 3               ][ Page 4                     ][ Page 5               ][ Page 2               ]
+            
+            const totalPages = parseInt(document.getElementById('pageCount').value);
+
+            // Cell layout definition matrix: { cellX, cellY, pageNum, rotate180 }
+            let layoutGrid = [];
+
+            if (totalPages === 8) {
+                layoutGrid = [
+                    { col: 0, row: 0, pageNum: 8, rotate: true },
+                    { col: 1, row: 0, pageNum: 1, rotate: true },
+                    { col: 2, row: 0, pageNum: 6, rotate: true },
+                    { col: 3, row: 0, pageNum: 5, rotate: true },
+                    { col: 0, row: 1, pageNum: 7, rotate: false },
+                    { col: 1, row: 1, pageNum: 2, rotate: false },
+                    { col: 2, row: 1, pageNum: 3, rotate: false },
+                    { col: 3, row: 1, pageNum: 4, rotate: false }
+                ];
+            } else {
+                // 16-page grid layout option (4x4 arrangement)
+                layoutGrid = [];
+                let p = 1;
+                for (let r = 0; r < 4; r++) {
+                    for (let c = 0; c < 4; c++) {
+                        layoutGrid.push({ col: c, row: r, pageNum: p++, rotate: (r < 2) });
+                    }
+                }
+            }
+
+            const cols = totalPages === 8 ? 4 : 4;
+            const rows = totalPages === 8 ? 2 : 4;
+
+            const cellWidth = (canvas.width - (padding * 2)) / cols;
+            const cellHeight = (canvas.height - (padding * 2)) / rows;
+
+            layoutGrid.forEach(cell => {
+                const slot = pageSlots.find(s => s.pageNum === cell.pageNum);
+                if (!slot) return;
+
+                const imgObj = uploadedImages.find(i => i.id === slot.imageId);
+
+                // Compute Bounding Box for cell with spine & spacing
+                let x = padding + cell.col * cellWidth;
+                let y = padding + cell.row * cellHeight;
+                let w = cellWidth;
+                let h = cellHeight;
+
+                // Apply Spine offset margins (shifting outer edge for spine wrap)
+                if (enableSpine) {
+                    if (cell.col < cols / 2) {
+                        x += spineGap / 2;
+                        w -= spineGap / 2;
+                    } else {
+                        w -= spineGap / 2;
+                    }
+                }
+
+                // Check for Panorama seamlessly removing spacing between current and next page
+                let applySpacingRight = true;
+                if (slot.isPanoramaNext) {
+                    applySpacingRight = false; // Disable right gap for panoramic span
+                }
+
+                // Inner spacing adjustments
+                const padSpacing = spacing / 2;
+                x += padSpacing;
+                y += padSpacing;
+                w -= applySpacingRight ? spacing : padSpacing;
+                h -= spacing;
+
+                if (imgObj && imgObj.element) {
+                    drawPageImage(ctx, imgObj.element, x, y, w, h, cell.rotate);
+                }
+
+                // Page Label Guide on canvas (small light print)
+                ctx.save();
+                ctx.fillStyle = "rgba(150,150,150,0.5)";
+                ctx.font = "24px sans-serif";
+                ctx.fillText(`P.${cell.pageNum}`, x + 10, y + 30);
+                ctx.restore();
+            });
+        }
+
+        function drawPageImage(ctx, img, x, y, w, h, rotate180) {
+            ctx.save();
+            ctx.translate(x + w / 2, y + h / 2);
+            if (rotate180) {
+                ctx.rotate(Math.PI);
+            }
+
+            // Calculate Object Fit Cover dimensions inside cell
+            const imgAspect = img.width / img.height;
+            const cellAspect = w / h;
+            let drawW, drawH;
+
+            if (imgAspect > cellAspect) {
+                drawH = h;
+                drawW = h * imgAspect;
+            } else {
+                drawW = w;
+                drawH = w / imgAspect;
+            }
+
+            // Clip to cell boundary
+            ctx.beginPath();
+            ctx.rect(-w / 2, -h / 2, w, h);
+            ctx.clip();
+
+            // Draw image centered inside box
+            ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+            ctx.restore();
+        }
+
+        function drawFoldLines() {
+            ctx.save();
+            ctx.strokeStyle = "rgba(200, 200, 200, 0.4)";
+            ctx.lineWidth = 3;
+            ctx.setLineDash([15, 15]);
+
+            // Draw center folding axes
+            ctx.beginPath();
+            // Vertical center fold
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            // Horizontal center fold
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // --- Export Functions ---
+        function exportImage(mimeType) {
+            const link = document.createElement('a');
+            const ext = mimeType === 'image/tiff' ? 'tiff' : 'png';
+            link.download = `zine_layout_${Date.now()}.${ext}`;
+            link.href = canvas.toDataURL(mimeType);
+            link.click();
+        }
+
+        function exportJSON() {
+            const exportData = {
+                paperSize: document.getElementById('paperSize').value,
+                zineOrientation: document.getElementById('zineOrientation').value,
+                pageCount: document.getElementById('pageCount').value,
+                bgColor: document.getElementById('bgColor').value,
+                padding: document.getElementById('padding').value,
+                spacing: document.getElementById('spacing').value,
+                enableSpine: document.getElementById('enableSpine').checked,
+                spineGap: document.getElementById('spineGap').value,
+                pageSlots: pageSlots
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `zine_config_${Date.now()}.json`);
+            dlAnchor.click();
+        }
+
+        document.getElementById('jsonInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    if (data.paperSize) document.getElementById('paperSize').value = data.paperSize;
+                    if (data.zineOrientation) document.getElementById('zineOrientation').value = data.zineOrientation;
+                    if (data.pageCount) document.getElementById('pageCount').value = data.pageCount;
+                    if (data.bgColor) document.getElementById('bgColor').value = data.bgColor;
+                    if (data.padding) document.getElementById('padding').value = data.padding;
+                    if (data.spacing) document.getElementById('spacing').value = data.spacing;
+                    if (data.enableSpine !== undefined) document.getElementById('enableSpine').checked = data.enableSpine;
+                    if (data.spineGap) document.getElementById('spineGap').value = data.spineGap;
+                    
+                    if (data.pageSlots) pageSlots = data.pageSlots;
+
+                    updatePageSlots();
+                    render();
+                } catch (err) {
+                    alert("Invalid JSON file uploaded.");
+                }
+            };
+            reader.readAsText(file);
+        });
+    </script>
 </body>
 </html>
